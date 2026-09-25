@@ -1,0 +1,75 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 6, 4, 0.75);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.box {
+  background: linear-gradient(160deg, #2b2320, #16110f);
+  border: 1px solid #57c2b8;
+  border-radius: 16px;
+  padding: 28px 30px;
+  width: 420px;
+  max-width: 92vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: #57c2b8;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.content {
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 13px;
+  color: #f2e6cc;
+  line-height: 1.65;
+  opacity: 0.9;
+}
+
+.content p {
+  margin: 0 0 10px;
+}
+
+.content strong {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.closeBtn {
+  align-self: flex-start;
+  margin-top: 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f2e6cc;
+  padding: 9px 22px;
+  border-radius: 20px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover { background: rgba(255, 255, 255, 0.06); }
+.closeBtn:focus-visible { outline: 2px solid #57c2b8; outline-offset: 3px; }

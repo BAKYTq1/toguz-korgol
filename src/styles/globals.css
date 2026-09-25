@@ -1,0 +1,66 @@
+:root {
+  --gold: #d4af37;
+  --gold-dim: #a5822a;
+  --red: #b5292f;
+  --cream: #f2e6cc;
+  --teal: #2f8f89;
+  --teal-light: #57c2b8;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Manrope', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #3a2c1c 0%, transparent 55%),
+    radial-gradient(ellipse 100% 90% at 50% 110%, #1a120a 0%, transparent 60%),
+    linear-gradient(160deg, #241a2a 0%, #1c1420 30%, #140f14 60%, #0b090c 100%);
+  font-family: var(--font-body);
+  color: var(--cream);
+}
+
+/* Noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 26px
+  );
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.65);
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(87, 194, 184, 0.3); border-radius: 2px; }

@@ -1,0 +1,25 @@
+.banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 26px;
+  background: rgba(20, 16, 14, 0.88);
+  border: 1px solid rgba(87, 194, 184, 0.35);
+  border-radius: 30px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  z-index: 5;
+  text-align: center;
+  min-width: 250px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #f2e6cc;
+  white-space: nowrap;
+}
+
+.banner b {
+  color: #57c2b8;
+  font-weight: 700;
+}

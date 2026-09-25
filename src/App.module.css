@@ -1,0 +1,86 @@
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.topControls {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  z-index: 6;
+  pointer-events: auto;
+}
+
+.topBtn {
+  background: rgba(20, 16, 14, 0.55);
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: 0.2s;
+  backdrop-filter: blur(3px);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.topBtn:focus-visible {
+  outline: 2px solid #57c2b8;
+  outline-offset: 2px;
+}
+
+.topBtnTeal {
+  border-color: rgba(87, 194, 184, 0.45);
+  color: #57c2b8;
+}
+.topBtnTeal:hover { background: rgba(87, 194, 184, 0.15); }
+
+.topBtnGold {
+  border-color: rgba(212, 175, 55, 0.45);
+  color: #d4af37;
+  min-width: 32px;
+  text-align: center;
+}
+.topBtnGold:hover { background: rgba(212, 175, 55, 0.12); }
+
+.topBtnLight {
+  border-color: rgba(242, 230, 204, 0.3);
+  color: #f2e6cc;
+}
+.topBtnLight:hover { background: rgba(87, 194, 184, 0.15); border-color: #57c2b8; }
+
+.linked {
+  border-color: #d4af37 !important;
+  color: #d4af37 !important;
+}
+
+.hint {
+  position: fixed;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 10px;
+  opacity: 0.4;
+  letter-spacing: 1px;
+  font-weight: 500;
+  z-index: 5;
+  pointer-events: none;
+  color: #f2e6cc;
+}
