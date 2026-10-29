@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember() {
+      return signedIn() &&
+        (request.auth.uid == resource.data.player0 || request.auth.uid == resource.data.player1);
+    }
+
+    match /rooms/{roomId} {
+      // Authenticated clients need to discover waiting rooms for quick matchmaking.
+      allow get, list: if signedIn();
+
+      allow create: if signedIn() &&
+        request.resource.data.player0 == request.auth.uid &&
+        request.resource.data.player1 == null &&
+        request.resource.data.status == 'waiting' &&
+        request.resource.data.turn == 0 &&
+          request.resource.data.revision == 0 &&
+          request.resource.data.lastSeen0 == request.time;
+
+      allow update: if signedIn() && (
+        // Claim an open match slot.
+        (resource.data.status == 'waiting' &&
+          resource.data.player1 == null &&
+          request.resource.data.player0 == resource.data.player0 &&
+          request.resource.data.player1 == request.auth.uid &&
+          request.auth.uid != resource.data.player0 &&
+          request.resource.data.status == 'playing' &&
+          request.resource.data.lastSeen1 == request.time &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['player1', 'status', 'updatedAt', 'lastSeen1'])) ||
+        // A player can leave, or submit the next game event.
+        (isMember() && (
+          (resource.data.player0 == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen0']) &&
+            request.resource.data.lastSeen0 == request.time) ||
+          (resource.data.player1 == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSeen1']) &&
+            request.resource.data.lastSeen1 == request.time) ||
+          (request.resource.data.status == 'closed' &&
+            request.resource.data.closedBy == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'closedBy'])) ||
+          (resource.data.status == 'playing' &&
+            request.resource.data.status == 'playing' &&
+            request.resource.data.revision == resource.data.revision + 1 &&
+            request.resource.data.event.from == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['turn', 'revision', 'event', 'updatedAt']) &&
+            ((request.resource.data.event.type == 'restart' && request.resource.data.turn == 0) ||
+              (request.resource.data.event.type == 'move' &&
+                request.resource.data.event.idx >= 0 && request.resource.data.event.idx <= 17 &&
+                resource.data.turn == (resource.data.player0 == request.auth.uid ? 0 : 1) &&
+                request.resource.data.turn == 1 - resource.data.turn))
+        ))
+      );
+
+      // The searching player may cancel; old abandoned queue entries can be pruned.
+      allow delete: if signedIn() && (
+        resource.data.player0 == request.auth.uid ||
+        (resource.data.status == 'waiting' &&
+          resource.data.lastSeen0 < request.time - duration.value(75, 's'))
+      );
+    }
+  }
+}

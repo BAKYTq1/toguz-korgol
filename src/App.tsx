@@ -34,13 +34,13 @@ export default function App() {
       // handled by status message
     }, []),
   };
-  const mp = useMultiplayer(mpCallbacks);
+  const mp = useMultiplayer(mpCallbacks, settings.lang);
 
-  const findOnlineOpponent = useCallback((server: string) => {
+  const findOnlineOpponent = useCallback(() => {
     restart();
     setStatsRecorded(false);
     setSettings({ gameMode: 'online' });
-    mp.findMatch(server);
+    void mp.findMatch();
   }, [mp.findMatch, restart, setSettings]);
 
   const lang = settings.lang;
@@ -75,8 +75,7 @@ export default function App() {
   const handlePlayOnline = useCallback(() => {
     setShowOnline(true);
     if (mp.mp.status === 'idle' || mp.mp.status === 'error' || mp.mp.status === 'disconnected') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      findOnlineOpponent(`${protocol}//${window.location.host}/ws`);
+      findOnlineOpponent();
     }
   }, [findOnlineOpponent, mp.mp.status]);
 
