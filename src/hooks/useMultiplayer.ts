@@ -30,6 +30,7 @@ export interface MPCallbacks {
 
 export function useMultiplayer(callbacks: MPCallbacks) {
   const wsRef = useRef<WebSocket | null>(null);
+  const statusRef = useRef<MPStatus>('idle');
   const [mp, setMp] = useState<MPState>({
     status: 'idle',
     myPlayer: null,
@@ -38,12 +39,16 @@ export function useMultiplayer(callbacks: MPCallbacks) {
   });
 
   const updateMp = useCallback((partial: Partial<MPState>) => {
-    setMp(prev => ({ ...prev, ...partial }));
+    setMp(prev => {
+      const next = { ...prev, ...partial };
+      statusRef.current = next.status;
+      return next;
+    });
   }, []);
 
-  const connect = useCallback((serverUrl: string, roomId: string) => {
+  const openConnection = useCallback((serverUrl: string, roomId?: string) => {
     if (!serverUrl) { updateMp({ message: 'Укажите адрес сервера.' }); return; }
-    if (!roomId) { updateMp({ message: 'Укажите код комнаты.' }); return; }
+    if (roomId !== undefined && !roomId) { updateMp({ message: 'Укажите код комнаты.' }); return; }
 
     if (wsRef.current) wsRef.current.close();
 
@@ -55,22 +60,41 @@ export function useMultiplayer(callbacks: MPCallbacks) {
       return;
     }
     wsRef.current = ws;
-    updateMp({ status: 'connecting', room: roomId, message: 'Подключение к серверу...' });
+    updateMp({
+      status: 'connecting',
+      room: roomId ?? null,
+      message: 'Подключение к серверу...',
+    });
 
     ws.addEventListener('open', () => {
-      ws.send(JSON.stringify({ type: 'join', room: roomId }));
+      if (roomId === undefined) {
+        ws.send(JSON.stringify({ type: 'find-match' }));
+      } else {
+        ws.send(JSON.stringify({ type: 'join', room: roomId }));
+      }
     });
 
     ws.addEventListener('message', (ev: MessageEvent<string>) => {
-      let msg: { type: string; youAre?: number; idx?: number; message?: string };
+      let msg: { type: string; youAre?: number; idx?: number; message?: string; room?: string };
       try { msg = JSON.parse(ev.data); } catch { return; }
 
       switch (msg.type) {
+        case 'searching':
+          updateMp({ status: 'waiting', message: 'Ищем соперника...' });
+          break;
         case 'joined':
           updateMp({
             status: 'waiting',
             myPlayer: (msg.youAre ?? 0) as Player,
             message: `Вы — Игрок ${(msg.youAre ?? 0) + 1}. Ждём соперника...`,
+          });
+          break;
+        case 'match-found':
+          updateMp({
+            status: 'waiting',
+            myPlayer: (msg.youAre ?? 0) as Player,
+            room: msg.room ?? null,
+            message: 'Соперник найден!',
           });
           break;
         case 'start':
@@ -94,10 +118,10 @@ export function useMultiplayer(callbacks: MPCallbacks) {
 
     ws.addEventListener('close', () => {
       if (wsRef.current === ws) {
-        const wasPlaying = mp.status === 'playing';
+        const wasActive = statusRef.current === 'playing' || statusRef.current === 'waiting';
         updateMp({
-          status: wasPlaying ? 'disconnected' : mp.status,
-          message: wasPlaying ? 'Соединение потеряно.' : mp.message,
+          status: wasActive ? 'disconnected' : statusRef.current,
+          message: wasActive ? 'Соединение потеряно.' : mp.message,
         });
       }
     });
@@ -106,6 +130,14 @@ export function useMultiplayer(callbacks: MPCallbacks) {
       updateMp({ status: 'error', message: 'Не удалось подключиться. Проверьте адрес сервера.' });
     });
   }, [callbacks, updateMp]);
+
+  const connect = useCallback((serverUrl: string, roomId: string) => {
+    openConnection(serverUrl, roomId);
+  }, [openConnection]);
+
+  const findMatch = useCallback((serverUrl: string) => {
+    openConnection(serverUrl);
+  }, [openConnection]);
 
   const sendMove = useCallback((idx: number) => {
     const ws = wsRef.current;
@@ -122,8 +154,12 @@ export function useMultiplayer(callbacks: MPCallbacks) {
   }, []);
 
   const disconnect = useCallback(() => {
-    wsRef.current?.close();
+    const ws = wsRef.current;
     wsRef.current = null;
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'cancel-match' }));
+    }
+    ws?.close();
     updateMp({ status: 'idle', myPlayer: null, room: null, message: '' });
   }, [updateMp]);
 
@@ -132,5 +168,5 @@ export function useMultiplayer(callbacks: MPCallbacks) {
     return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   }, []);
 
-  return { mp, connect, sendMove, sendRestart, disconnect, randomRoom };
+  return { mp, connect, findMatch, sendMove, sendRestart, disconnect, randomRoom };
 }

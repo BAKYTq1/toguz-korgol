@@ -40,6 +40,9 @@ export type TranslationKey =
   | 'roomLabel'
   | 'createRoom'
   | 'joinRoom'
+  | 'findOpponent'
+  | 'cancelSearch'
+  | 'disconnect'
   | 'onlineClose'
   | 'waitingOpponent'
   | 'youAre'
@@ -86,11 +89,14 @@ export const translations: Record<Lang, Translations> = {
     statsDraws: 'Тең байге',
     statsReset: 'Тазалоо',
     onlineTitle: 'Онлайн оюн',
-    onlineHint: 'Бирөө бөлмө түзөт жана кодду досуна жөнөтөт, экинчиси ошол эле код менен кирет.',
+    onlineHint: 'Кокус каршылашты табыңыз же бөлмө түзүп, досуңузду код менен чакырыңыз.',
     serverLabel: 'Сервер дареги (wss://...)',
     roomLabel: 'Бөлмө коду',
     createRoom: 'Түзүү',
     joinRoom: 'Кирүү',
+    findOpponent: 'Каршылашты издөө',
+    cancelSearch: 'Издөөнү токтотуу',
+    disconnect: 'Байланышты үзүү',
     onlineClose: 'Жабуу',
     waitingOpponent: 'Каршылаш күтүлүүдө...',
     youAre: 'Сиз — Ойунчу',
@@ -145,11 +151,14 @@ export const translations: Record<Lang, Translations> = {
     statsDraws: 'Ничьи',
     statsReset: 'Сбросить',
     onlineTitle: 'Игра по сети',
-    onlineHint: 'Один создаёт комнату и отправляет код другу, второй вводит тот же код и адрес сервера.',
+    onlineHint: 'Найдите случайного соперника или создайте комнату и пригласите друга по коду.',
     serverLabel: 'Адрес сервера (wss://...)',
     roomLabel: 'Код комнаты',
     createRoom: 'Создать',
     joinRoom: 'Войти',
+    findOpponent: 'Найти соперника',
+    cancelSearch: 'Отменить поиск',
+    disconnect: 'Отключиться',
     onlineClose: 'Закрыть',
     waitingOpponent: 'Ожидаем соперника...',
     youAre: 'Вы — Игрок',
@@ -204,11 +213,14 @@ export const translations: Record<Lang, Translations> = {
     statsDraws: 'Draws',
     statsReset: 'Reset',
     onlineTitle: 'Online Game',
-    onlineHint: 'One player creates a room and shares the code. The other enters the same code to join.',
+    onlineHint: 'Find a random opponent or create a room and invite a friend with its code.',
     serverLabel: 'Server address (wss://...)',
     roomLabel: 'Room code',
     createRoom: 'Create',
     joinRoom: 'Join',
+    findOpponent: 'Find an opponent',
+    cancelSearch: 'Cancel search',
+    disconnect: 'Disconnect',
     onlineClose: 'Close',
     waitingOpponent: 'Waiting for opponent...',
     youAre: 'You are Player',

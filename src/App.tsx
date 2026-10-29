@@ -36,6 +36,13 @@ export default function App() {
   };
   const mp = useMultiplayer(mpCallbacks);
 
+  const findOnlineOpponent = useCallback((server: string) => {
+    restart();
+    setStatsRecorded(false);
+    setSettings({ gameMode: 'online' });
+    mp.findMatch(server);
+  }, [mp.findMatch, restart, setSettings]);
+
   const lang = settings.lang;
   const isAI = settings.gameMode === 'ai';
   const isOnline = settings.gameMode === 'online';
@@ -64,6 +71,14 @@ export default function App() {
       mp.sendMove(idx);
     }
   }, [isOnline, mp]);
+
+  const handlePlayOnline = useCallback(() => {
+    setShowOnline(true);
+    if (mp.mp.status === 'idle' || mp.mp.status === 'error' || mp.mp.status === 'disconnected') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      findOnlineOpponent(`${protocol}//${window.location.host}/ws`);
+    }
+  }, [findOnlineOpponent, mp.mp.status]);
 
   const handleAnimDone = useCallback(() => {
     setAnimating(false);
@@ -109,7 +124,7 @@ export default function App() {
       <div className={styles.topControls}>
         <button
           className={`${styles.topBtn} ${styles.topBtnTeal} ${isOnline && mp.mp.status === 'playing' ? styles.linked : ''}`}
-          onClick={() => setShowOnline(true)}
+          onClick={handlePlayOnline}
           aria-label={t(lang, 'playOnline')}
         >
           {t(lang, 'playOnline')}
@@ -177,10 +192,8 @@ export default function App() {
         show={showOnline}
         lang={lang}
         mp={mp.mp}
-        onConnect={mp.connect}
         onClose={() => setShowOnline(false)}
         onDisconnect={mp.disconnect}
-        generateRoom={mp.randomRoom}
       />
     </div>
   );
