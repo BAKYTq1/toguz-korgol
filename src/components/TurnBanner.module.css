@@ -23,3 +23,23 @@
   color: #57c2b8;
   font-weight: 700;
 }
+
+.banner:has(.dot) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #d4af37;
+  box-shadow: 0 0 9px currentColor;
+}
+
+.playing { background: #57c2b8; color: #57c2b8; }
+.waiting, .connecting { background: #d4af37; color: #d4af37; }
+.disconnected, .error { background: #e36c68; color: #e36c68; }

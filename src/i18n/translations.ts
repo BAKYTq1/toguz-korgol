@@ -7,6 +7,10 @@ export type TranslationKey =
   | 'player2'
   | 'newGame'
   | 'playOnline'
+  | 'onlineConnecting'
+  | 'onlineConnected'
+  | 'yourTurn'
+  | 'opponentTurn'
   | 'turnLabel'
   | 'hint'
   | 'tuzdukLabel'
@@ -61,6 +65,10 @@ export const translations: Record<Lang, Translations> = {
     player2: 'Ойунчу 2',
     newGame: 'Жаңы оюн ↺',
     playOnline: '🌐 Онлайн ойноо',
+    onlineConnecting: 'Серверге туташуу…',
+    onlineConnected: 'Каршылаш туташты',
+    yourTurn: 'Сиздин жүрүш',
+    opponentTurn: 'Каршылаштын жүрүшү',
     turnLabel: 'Жүрөт:',
     hint: 'Чуңкурду кармап тартыңыз',
     tuzdukLabel: 'Туздук: чуңкур №',
@@ -123,6 +131,10 @@ export const translations: Record<Lang, Translations> = {
     player2: 'Игрок 2',
     newGame: 'Новая игра ↺',
     playOnline: '🌐 Играть онлайн',
+    onlineConnecting: 'Подключаемся к игре…',
+    onlineConnected: 'Соперник подключён',
+    yourTurn: 'Ваш ход',
+    opponentTurn: 'Ход соперника',
     turnLabel: 'Ходит:',
     hint: 'Потяните лунку и отпустите',
     tuzdukLabel: 'Туздук: лунка №',
@@ -185,6 +197,10 @@ export const translations: Record<Lang, Translations> = {
     player2: 'Player 2',
     newGame: 'New Game ↺',
     playOnline: '🌐 Play Online',
+    onlineConnecting: 'Connecting to game…',
+    onlineConnected: 'Opponent connected',
+    yourTurn: 'Your turn',
+    opponentTurn: "Opponent's turn",
     turnLabel: 'Turn:',
     hint: 'Drag a pit and release',
     tuzdukLabel: 'Tuzduk: pit №',

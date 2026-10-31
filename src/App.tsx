@@ -25,8 +25,8 @@ export default function App() {
   // Multiplayer
   const mpCallbacks = {
     onMove: useCallback((idx: number) => {
-      makeMove(idx);
-    }, [makeMove]),
+      if (makeMove(idx)) setAnimating(false);
+    }, [makeMove, setAnimating]),
     onRestart: useCallback(() => {
       restart();
     }, [restart]),
@@ -158,6 +158,8 @@ export default function App() {
         current={game.current}
         gameOver={game.gameOver}
         lang={lang}
+        onlineStatus={isOnline ? mp.mp.status : null}
+        myPlayer={mp.mp.myPlayer}
       />
 
       <div className={styles.hint}>{t(lang, 'hint')}</div>
