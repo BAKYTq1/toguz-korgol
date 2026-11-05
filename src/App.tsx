@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import Board, { BoardHandle } from './components/Board';
+import { lazy, Suspense, useState, useCallback, useEffect, useRef } from 'react';
+import Board, { BoardHandle, MoveSelection } from './components/Board';
 import Header from './components/Header';
 import ScorePanel from './components/ScorePanel';
 import TurnBanner from './components/TurnBanner';
@@ -7,17 +7,30 @@ import GameOverlay from './components/GameOverlay';
 import RulesModal from './components/RulesModal';
 import SettingsModal from './components/SettingsModal';
 import OnlineModal from './components/OnlineModal';
-import AccountModal from './components/AccountModal';
+import MoveConfirmBar from './components/MoveConfirmBar';
 import Icon, { IconName } from './components/Icon';
 import { useGameStore } from './hooks/useGameStore';
-import { useMultiplayer } from './hooks/useMultiplayer';
+import { normalizeRoomCode, useMultiplayer } from './hooks/useMultiplayer';
 import { t, TranslationKey } from './i18n/translations';
-import { firebaseAuth } from './lib/firebase';
+import { firebaseConfigured, loadFirebase, preloadFirebase } from './lib/firebase';
 import { recordProfileGame } from './lib/profile';
 import type { Player } from './game/engine';
 import styles from './App.module.css';
 
 const AI_PLAYER: Player = 1;
+
+// The profile window (and the Firebase SDK it needs) is only downloaded when it is opened.
+const AccountModal = lazy(() => import('./components/AccountModal'));
+
+/** Room code from an invite link (?room=ABC23), read once on load. */
+function readInviteCode() {
+  try {
+    const code = new URLSearchParams(window.location.search).get('room');
+    return code ? normalizeRoomCode(code) : '';
+  } catch {
+    return '';
+  }
+}
 
 export default function App() {
   const store = useGameStore();
@@ -29,6 +42,8 @@ export default function App() {
   const [showOnline, setShowOnline] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
   const [statsRecorded, setStatsRecorded] = useState(false);
+  const [selection, setSelection] = useState<MoveSelection | null>(null);
+  const [inviteCode] = useState(readInviteCode);
   const boardRef = useRef<BoardHandle>(null);
 
   // Multiplayer — opponent moves go through the board so they are animated and queued.
@@ -47,13 +62,50 @@ export default function App() {
   };
   const mp = useMultiplayer(mpCallbacks, settings.lang);
 
-  const findOnlineOpponent = useCallback(() => {
+  // Every way into an online game starts from a fresh board in online mode.
+  const prepareOnlineGame = useCallback(() => {
     boardRef.current?.clearQueue();
     restart();
     setStatsRecorded(false);
     setSettings({ gameMode: 'online' });
+  }, [restart, setSettings]);
+
+  const handleQuickMatch = useCallback(() => {
+    prepareOnlineGame();
     void mp.findMatch();
-  }, [mp.findMatch, restart, setSettings]);
+  }, [prepareOnlineGame, mp.findMatch]);
+
+  const handleCreateRoom = useCallback(() => {
+    prepareOnlineGame();
+    void mp.createRoom();
+  }, [prepareOnlineGame, mp.createRoom]);
+
+  const handleJoinRoom = useCallback((code: string) => {
+    prepareOnlineGame();
+    void mp.joinRoom(code);
+  }, [prepareOnlineGame, mp.joinRoom]);
+
+  // An invite link opens the online window and joins the friend's room right away.
+  const inviteHandledRef = useRef(false);
+  useEffect(() => {
+    if (!inviteCode || inviteHandledRef.current) return;
+    inviteHandledRef.current = true;
+    try {
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch {
+      // Keeping the parameter in the address bar is harmless.
+    }
+    setShowOnline(true);
+    handleJoinRoom(inviteCode);
+  }, [inviteCode, handleJoinRoom]);
+
+  // Close the online window once the opponent is there.
+  const onlineStatus = mp.mp.status;
+  useEffect(() => {
+    if (onlineStatus !== 'playing') return;
+    const timer = setTimeout(() => setShowOnline(false), 900);
+    return () => clearTimeout(timer);
+  }, [onlineStatus]);
 
   const lang = settings.lang;
   const isAI = settings.gameMode === 'ai';
@@ -92,8 +144,15 @@ export default function App() {
     if (result === 'wins') recordWin();
     else if (result === 'losses') recordLoss();
     else recordDraw();
-    const user = firebaseAuth?.currentUser;
-    if (user) void recordProfileGame(user.uid, result).catch(error => console.error('Could not save profile result', error));
+    // Only players who already have a Firebase session (guest or registered) get profile stats.
+    if (firebaseConfigured) {
+      void loadFirebase()
+        .then(async ({ auth }) => {
+          await auth.authStateReady();
+          if (auth.currentUser) await recordProfileGame(auth.currentUser.uid, result);
+        })
+        .catch(error => console.error('Could not save profile result', error));
+    }
   }, [game.gameOver, game.winner, isAI, isOnline, me, mp.mp.myPlayer, statsRecorded, recordWin, recordLoss, recordDraw]);
 
   const handleRestart = useCallback(() => {
@@ -112,11 +171,10 @@ export default function App() {
   }, [onlinePlaying, mp]);
 
   const handlePlayOnline = useCallback(() => {
+    // Start downloading Firebase while the player reads the options.
+    preloadFirebase();
     setShowOnline(true);
-    if (mp.mp.status === 'idle' || mp.mp.status === 'error' || mp.mp.status === 'disconnected') {
-      findOnlineOpponent();
-    }
-  }, [findOnlineOpponent, mp.mp.status]);
+  }, []);
 
   const handleAnimDone = useCallback(() => {
     setAnimating(false);
@@ -124,7 +182,7 @@ export default function App() {
 
   const navItems: { key: string; icon: IconName; label: TranslationKey; title: TranslationKey; onClick: () => void; accent?: string; wide?: boolean }[] = [
     { key: 'online', icon: 'online', label: 'navOnline', title: 'playOnline', onClick: handlePlayOnline, accent: onlinePlaying ? styles.linked : undefined, wide: true },
-    { key: 'account', icon: 'user', label: 'navProfile', title: 'accountTitle', onClick: () => setShowAccount(true) },
+    { key: 'account', icon: 'user', label: 'navProfile', title: 'accountTitle', onClick: () => { preloadFirebase(); setShowAccount(true); } },
     { key: 'settings', icon: 'settings', label: 'navSettings', title: 'settingsTitle', onClick: () => setShowSettings(true) },
     { key: 'rules', icon: 'rules', label: 'navRules', title: 'rulesTitle', onClick: () => setShowRules(true), accent: styles.gold },
     { key: 'restart', icon: 'restart', label: 'navNew', title: 'newGame', onClick: handleRestart, accent: styles.light, wide: true },
@@ -148,6 +206,8 @@ export default function App() {
           inputLocked={isOnline && !onlinePlaying}
           perspective={perspective}
           onMoveForMP={handleMoveForMP}
+          confirmMoves={settings.confirmMoves}
+          onSelectionChange={setSelection}
         />
       </div>
 
@@ -184,6 +244,14 @@ export default function App() {
         ))}
       </nav>
 
+      {selection ? (
+        <MoveConfirmBar
+          selection={selection}
+          lang={lang}
+          onConfirm={() => boardRef.current?.confirmSelection()}
+          onCancel={() => boardRef.current?.clearSelection()}
+        />
+      ) : (
       <TurnBanner
         current={game.current}
         gameOver={game.gameOver}
@@ -194,6 +262,7 @@ export default function App() {
         myPlayer={me}
         aiPlayer={isAI ? AI_PLAYER : null}
       />
+      )}
 
       <div className={styles.hint}>{t(lang, 'hint')}</div>
 
@@ -228,17 +297,25 @@ export default function App() {
         show={showOnline}
         lang={lang}
         mp={mp.mp}
+        initialCode={inviteCode}
+        onQuickMatch={handleQuickMatch}
+        onCreateRoom={handleCreateRoom}
+        onJoinRoom={handleJoinRoom}
         onClose={() => setShowOnline(false)}
         onDisconnect={mp.disconnect}
       />
 
-      <AccountModal
-        show={showAccount}
-        lang={lang}
-        sessionBusy={mp.mp.status === 'connecting' || mp.mp.status === 'waiting' || mp.mp.status === 'playing'}
-        localStats={stats}
-        onClose={() => setShowAccount(false)}
-      />
+      {showAccount && (
+        <Suspense fallback={null}>
+          <AccountModal
+            show
+            lang={lang}
+            sessionBusy={mp.mp.status === 'connecting' || mp.mp.status === 'waiting' || mp.mp.status === 'playing'}
+            localStats={stats}
+            onClose={() => setShowAccount(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

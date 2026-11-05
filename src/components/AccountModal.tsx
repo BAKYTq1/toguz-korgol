@@ -16,7 +16,7 @@ import {
 } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Lang, t, type TranslationKey } from '../i18n/translations';
-import { firebaseAuth, firestore } from '../lib/firebase';
+import { loadFirebase, loadedFirebase, type FirebaseKit } from '../lib/firebase';
 import {
   adoptAccountName,
   ensureUserProfile,
@@ -75,6 +75,11 @@ function describeError(err: unknown, lang: Lang): string {
 }
 
 export default function AccountModal({ show, lang, sessionBusy, localStats, onClose }: AccountModalProps) {
+  // This component is loaded lazily; the Firebase SDK may still be downloading on first open.
+  const [fb, setFb] = useState<FirebaseKit | null>(loadedFirebase);
+  const firebaseAuth = fb?.auth ?? null;
+  const firestore = fb?.db ?? null;
+  const [authReady, setAuthReady] = useState(false);
   const [user, setUser] = useState<User | null>(firebaseAuth?.currentUser ?? null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -87,15 +92,35 @@ export default function AccountModal({ show, lang, sessionBusy, localStats, onCl
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
+    if (fb || !show) return;
+    let active = true;
+    loadFirebase()
+      .then(kit => { if (active) setFb(kit); })
+      .catch(err => { if (active) setError(describeError(err, lang)); });
+    return () => { active = false; };
+  }, [fb, show, lang]);
+
+  useEffect(() => {
     if (!firebaseAuth) return;
-    return onAuthStateChanged(firebaseAuth, setUser);
-  }, []);
+    let active = true;
+    // Wait for the saved session to be restored before deciding the player is signed out.
+    void firebaseAuth.authStateReady().then(() => {
+      if (!active) return;
+      setUser(firebaseAuth.currentUser);
+      setAuthReady(true);
+    });
+    const unsubscribe = onAuthStateChanged(firebaseAuth, setUser);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [firebaseAuth]);
 
   // Everyone gets at least a guest account so stats and the profile work right away.
   useEffect(() => {
-    if (!show || !firebaseAuth || user) return;
+    if (!show || !firebaseAuth || !authReady || user) return;
     void signInAnonymously(firebaseAuth).catch(err => setError(describeError(err, lang)));
-  }, [show, user, lang]);
+  }, [show, firebaseAuth, authReady, user, lang]);
 
   useEffect(() => {
     const db = firestore;
@@ -120,7 +145,7 @@ export default function AccountModal({ show, lang, sessionBusy, localStats, onCl
       unsubscribe?.();
     };
     // localStats is read only once per device, so finished games need not re-run this.
-  }, [show, user?.uid, lang]);
+  }, [show, user?.uid, lang, firestore]);
 
   if (!show) return null;
 

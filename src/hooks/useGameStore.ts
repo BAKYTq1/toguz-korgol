@@ -15,6 +15,8 @@ export interface Settings {
   sound: boolean;
   aiDifficulty: AIDifficulty;
   gameMode: GameMode;
+  /** First tap selects a pit, a second tap (or the Move button) plays it. */
+  confirmMoves: boolean;
 }
 
 export interface Stats {
@@ -68,7 +70,7 @@ function loadStats(): Stats {
 }
 
 function defaultSettings(): Settings {
-  return { lang: 'ru', sound: true, aiDifficulty: 'medium', gameMode: 'local' };
+  return { lang: 'ru', sound: true, aiDifficulty: 'medium', gameMode: 'local', confirmMoves: true };
 }
 
 function saveSettings(s: Settings) {

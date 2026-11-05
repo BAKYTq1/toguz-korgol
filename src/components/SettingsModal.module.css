@@ -76,6 +76,14 @@
 .pill.active { background: #2f8f89; border-color: #57c2b8; color: #e8f8f7; }
 .pill:focus-visible { outline: 2px solid #57c2b8; }
 
+.note {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(242, 230, 204, 0.55);
+}
+
 .divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.08);

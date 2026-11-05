@@ -117,6 +117,32 @@ export type TranslationKey =
   | 'errUnauthorizedDomain'
   | 'errPermission'
   | 'errGeneric'
+  | 'waitingFriend'
+  | 'roomCodeInvalid'
+  | 'roomNotFound'
+  | 'roomFull'
+  | 'quickMatch'
+  | 'quickMatchHint'
+  | 'friendRoom'
+  | 'friendRoomHint'
+  | 'createFriendRoom'
+  | 'joinByCode'
+  | 'orLabel'
+  | 'copyCode'
+  | 'copied'
+  | 'shareInvite'
+  | 'inviteText'
+  | 'roomCodeTitle'
+  | 'confirmMoveLabel'
+  | 'confirmMoveHint'
+  | 'confirmMove'
+  | 'cancelMove'
+  | 'pitNumber'
+  | 'previewCapture'
+  | 'previewTuzduk'
+  | 'previewTapAgain'
+  | 'settingOn'
+  | 'settingOff'
   | 'rulesText';
 
 type Translations = Record<TranslationKey, string>;
@@ -239,6 +265,32 @@ export const translations: Record<Lang, Translations> = {
     errUnauthorizedDomain: 'Бул домен Firebase уруксат берилген домендерине кошулган эмес',
     errPermission: 'Маалыматка жетүү жок. Firestore эрежелерин жаңыртыңыз',
     errGeneric: 'Бир нерсе туура эмес болду. Кайра аракет кылыңыз',
+    waitingFriend: 'Досуңузду күтүүдө — ага бөлмөнүн кодун жөнөтүңүз',
+    roomCodeInvalid: 'Бөлмө коду 5 белгиден турат',
+    roomNotFound: 'Бөлмө табылган жок. Кодду текшериңиз',
+    roomFull: 'Бул бөлмөдө оюн жүрүп жатат',
+    quickMatch: 'Кокус каршылаш',
+    quickMatchHint: 'Каалаган бош оюнчуну табабыз',
+    friendRoom: 'Дос менен ойноо',
+    friendRoomHint: 'Бөлмө түзүп, кодду досуңузга жөнөтүңүз — же сизге келген кодду жазыңыз',
+    createFriendRoom: 'Бөлмө түзүү',
+    joinByCode: 'Код менен кирүү',
+    orLabel: 'же',
+    copyCode: 'Көчүрүү',
+    copied: 'Көчүрүлдү!',
+    shareInvite: 'Бөлүшүү',
+    inviteText: 'Тогуз Коргоол ойнойлубу? Бөлмө коду:',
+    roomCodeTitle: 'Сиздин бөлмөнүн коду',
+    confirmMoveLabel: 'Жүрүштү ырастоо',
+    confirmMoveHint: 'Биринчи басуу чуңкурду тандайт, жүрүш — «Жүрүү» баскычы менен',
+    confirmMove: 'Жүрүү',
+    cancelMove: 'Жокко чыгаруу',
+    pitNumber: 'Чуңкур №',
+    previewCapture: 'аласыз',
+    previewTuzduk: 'туздук!',
+    previewTapAgain: 'Жүрүү үчүн дагы бир басыңыз',
+    settingOn: 'Күйүк',
+    settingOff: 'Өчүк',
     rulesText: `**Максат:** 162 коргоолдун 82 же андан ашыгын чогулт.
 
 **Жүрүш:** Өз катарыңдан бош эмес чуңкурду тандап, анын бардык коргоолдорун саат жебесине каршы бирден жайгаш. Биринчи коргоол ошол эле чуңкурга калат. Чуңкурда бир гана коргоол болсо — ал кийинки чуңкурга өтөт.
@@ -369,6 +421,32 @@ export const translations: Record<Lang, Translations> = {
     errUnauthorizedDomain: 'Этот домен не добавлен в разрешённые домены Firebase',
     errPermission: 'Нет доступа к данным. Обновите правила Firestore',
     errGeneric: 'Что-то пошло не так. Попробуйте ещё раз',
+    waitingFriend: 'Ждём друга — отправьте ему код комнаты',
+    roomCodeInvalid: 'Код комнаты — 5 символов',
+    roomNotFound: 'Комната не найдена. Проверьте код',
+    roomFull: 'В этой комнате уже идёт игра',
+    quickMatch: 'Случайный соперник',
+    quickMatchHint: 'Подберём любого свободного игрока',
+    friendRoom: 'Игра с другом',
+    friendRoomHint: 'Создайте комнату и отправьте код другу — или введите код, который прислали вам',
+    createFriendRoom: 'Создать комнату',
+    joinByCode: 'Войти по коду',
+    orLabel: 'или',
+    copyCode: 'Копировать',
+    copied: 'Скопировано!',
+    shareInvite: 'Поделиться',
+    inviteText: 'Сыграем в Тогуз Коргоол? Код комнаты:',
+    roomCodeTitle: 'Код вашей комнаты',
+    confirmMoveLabel: 'Подтверждать ход',
+    confirmMoveHint: 'Первое нажатие выбирает лунку, ход — кнопкой «Сходить»',
+    confirmMove: 'Сходить',
+    cancelMove: 'Отмена',
+    pitNumber: 'Лунка №',
+    previewCapture: 'заберёте',
+    previewTuzduk: 'туздук!',
+    previewTapAgain: 'Нажмите ещё раз, чтобы сходить',
+    settingOn: 'Вкл',
+    settingOff: 'Выкл',
     rulesText: `**Цель:** Собрать 82 или более из 162 камешков в свой казан.
 
 **Ход:** Выберите любую непустую лунку в своём ряду и рассейте все камешки по одному против часовой стрелки. Первый камешек остаётся в той же лунке. Если в лунке один камешек — он переходит в следующую.
@@ -499,6 +577,32 @@ export const translations: Record<Lang, Translations> = {
     errUnauthorizedDomain: 'This domain is not in Firebase’s authorized domains',
     errPermission: 'Access denied. Update the Firestore rules',
     errGeneric: 'Something went wrong. Please try again',
+    waitingFriend: 'Waiting for your friend — send them the room code',
+    roomCodeInvalid: 'A room code has 5 characters',
+    roomNotFound: 'Room not found. Check the code',
+    roomFull: 'A game is already running in this room',
+    quickMatch: 'Random opponent',
+    quickMatchHint: 'We will pair you with any free player',
+    friendRoom: 'Play with a friend',
+    friendRoomHint: 'Create a room and send the code to a friend — or enter the code you received',
+    createFriendRoom: 'Create room',
+    joinByCode: 'Join with code',
+    orLabel: 'or',
+    copyCode: 'Copy',
+    copied: 'Copied!',
+    shareInvite: 'Share',
+    inviteText: 'Let’s play Toguz Korgool! Room code:',
+    roomCodeTitle: 'Your room code',
+    confirmMoveLabel: 'Confirm moves',
+    confirmMoveHint: 'The first tap selects a pit, the “Move” button plays it',
+    confirmMove: 'Move',
+    cancelMove: 'Cancel',
+    pitNumber: 'Pit №',
+    previewCapture: 'you take',
+    previewTuzduk: 'tuzduk!',
+    previewTapAgain: 'Tap again to move',
+    settingOn: 'On',
+    settingOff: 'Off',
     rulesText: `**Goal:** Collect 82 or more of the 162 stones in your kazan (treasury).
 
 **Turn:** Choose any non-empty pit in your row and sow its stones one by one counter-clockwise. The first stone goes back into the same pit; a single stone moves to the next pit.

@@ -4,7 +4,7 @@
  */
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
-import { GameState, ownerOf, legalMoves, MoveResult } from '../game/engine';
+import { GameState, ownerOf, legalMoves, applyMove, MoveResult } from '../game/engine';
 import { getAIMove, AIDifficulty } from '../game/ai';
 import {
   applyBoardTransform,
@@ -40,6 +40,19 @@ interface BoardProps {
   /** The player whose row is drawn closest to the viewer. */
   perspective: 0 | 1;
   onMoveForMP?: (idx: number) => void;
+  /** Require a second tap (or confirmSelection) before a move is played. */
+  confirmMoves?: boolean;
+  onSelectionChange?: (selection: MoveSelection | null) => void;
+}
+
+/** A pit picked but not yet played, with a preview of what the move would do. */
+export interface MoveSelection {
+  idx: number;
+  /** Pit where the last stone lands. */
+  landing: number;
+  /** Stones the mover would add to their kazan. */
+  gain: number;
+  tuzduk: boolean;
 }
 
 export interface BoardHandle {
@@ -47,6 +60,9 @@ export interface BoardHandle {
   playRemoteMove: (idx: number) => void;
   /** Drop queued remote moves, e.g. before a restart. */
   clearQueue: () => void;
+  /** Play the selected pit (move confirmation mode). */
+  confirmSelection: () => void;
+  clearSelection: () => void;
 }
 
 const HUD_GAP = 8;
@@ -96,6 +112,8 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
   inputLocked = false,
   perspective,
   onMoveForMP,
+  confirmMoves = false,
+  onSelectionChange,
 }, ref) {
   const flipped = perspective === 0;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -127,7 +145,20 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
   // Invalid flash
   const invalidFlashesRef = useRef<Record<number, number>>({});
 
+  // Move confirmation: the picked pit and where its last stone would land
+  const selectionRef = useRef<MoveSelection | null>(null);
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
+
   const sound = useSound(soundEnabled);
+
+  const setSelection = useCallback((selection: MoveSelection | null) => {
+    if (selectionRef.current?.idx === selection?.idx) return;
+    selectionRef.current = selection;
+    onSelectionChangeRef.current?.(selection);
+  }, []);
+
+  const confirmRef = useRef<() => void>(() => undefined);
 
   useImperativeHandle(ref, () => ({
     playRemoteMove: (idx: number) => {
@@ -137,10 +168,13 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
     clearQueue: () => {
       remoteQueueRef.current = [];
     },
-  }), []);
+    confirmSelection: () => confirmRef.current(),
+    clearSelection: () => setSelection(null),
+  }), [setSelection]);
 
   // Sync visual when game changes from outside; a fresh game cancels any running animation.
   useEffect(() => {
+    setSelection(null);
     if (game.moveCount === 0) {
       animGenRef.current++;
       animatingRef.current = false;
@@ -155,7 +189,7 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
       visualPitsRef.current = game.pits.slice();
       visualKazanRef.current = [...game.kazan] as [number, number];
     }
-  }, [game]);
+  }, [game, setSelection]);
 
   const humanTurn = !game.gameOver
     && !inputLocked
@@ -163,6 +197,10 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
     && (!mpEnabled || mpMyPlayer === game.current);
   const humanTurnRef = useRef(humanTurn);
   humanTurnRef.current = humanTurn;
+
+  useEffect(() => {
+    if (!humanTurn || !confirmMoves) setSelection(null);
+  }, [humanTurn, confirmMoves, setSelection]);
 
   // ─── Move execution with animation ─────────────────────────────────────────
   const executeMove = useCallback((startIdx: number, remote = false) => {
@@ -242,6 +280,25 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
     return true;
   }, [game, onMove, onMoveForMP, sound, onAnimDone, mpEnabled, mpMyPlayer]);
 
+  confirmRef.current = () => {
+    const selection = selectionRef.current;
+    if (!selection || !humanTurnRef.current) return;
+    setSelection(null);
+    executeMove(selection.idx);
+  };
+
+  const selectPit = (idx: number) => {
+    const { nextState, result } = applyMove(game, idx);
+    const lastStep = result.steps[result.steps.length - 1];
+    setSelection({
+      idx,
+      landing: lastStep ? lastStep.pit : idx,
+      gain: nextState.kazan[game.current] - game.kazan[game.current],
+      tuzduk: result.tuzdukCreated,
+    });
+    vibrate(8);
+  };
+
   // ─── AI move ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!aiEnabled || game.gameOver || animatingRef.current) return;
@@ -287,9 +344,13 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
     const lp = toLogical(e.clientX, e.clientY, layoutRef.current);
     const idx = pitAt(lp.x, lp.y);
 
-    if (idx === -1) return;
+    if (idx === -1) { setSelection(null); return; }
     if (!humanTurn) return;
-    if (ownerOf(idx) !== game.current || game.pits[idx] <= 0) { invalidFlash(idx); return; }
+    if (ownerOf(idx) !== game.current || game.pits[idx] <= 0) {
+      invalidFlash(idx);
+      setSelection(null);
+      return;
+    }
 
     draggingRef.current = true;
     dragIdxRef.current = idx;
@@ -322,8 +383,15 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
     const lp = toLogical(e.clientX, e.clientY, layoutRef.current);
     cancelDrag();
     // Releasing outside the board cancels the move.
-    if (idx >= 0 && isInsideBoard(lp)) executeMove(idx);
-  }, [executeMove, cancelDrag]);
+    if (idx < 0 || !isInsideBoard(lp)) return;
+    if (!confirmMoves || selectionRef.current?.idx === idx) {
+      setSelection(null);
+      executeMove(idx);
+    } else {
+      selectPit(idx);
+    }
+  // selectPit reads the current game, which executeMove already depends on.
+  }, [executeMove, cancelDrag, confirmMoves, setSelection, game]);
 
   // ─── Resize ──────────────────────────────────────────────────────────────────
   const relayout = useCallback(() => {
@@ -411,7 +479,9 @@ const Board = forwardRef<BoardHandle, BoardProps>(function Board({
           invalidFlashes: invalidFlashesRef.current,
           labelAngle: uprightAngle(layout),
           labelScale: labelScaleFor(layout),
-          playable: showPlayable ? playable : [],
+          playable: showPlayable && !selectionRef.current ? playable : [],
+          selected: selectionRef.current?.idx ?? -1,
+          previewTarget: selectionRef.current?.landing ?? -1,
           lastMove: animating ? null : lastMoveRef.current,
           popups: popupsRef.current,
         },

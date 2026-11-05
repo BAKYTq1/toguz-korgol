@@ -266,6 +266,7 @@ export function drawPitWell(
     perfNow?: number;
     playable?: boolean;
     lastMove?: 'from' | 'to' | null;
+    previewTarget?: boolean;
   } = {},
 ) {
   const p = pitCenter(idx);
@@ -277,6 +278,7 @@ export function drawPitWell(
     perfNow = 0,
     playable = false,
     lastMove = null,
+    previewTarget = false,
   } = options;
 
   ctx.save();
@@ -323,6 +325,18 @@ export function drawPitWell(
     ctx.strokeStyle = lastMove === 'from' ? 'rgba(212,175,55,0.6)' : 'rgba(212,175,55,0.9)';
     ctx.stroke();
     ctx.setLineDash([]);
+  }
+
+  if (previewTarget) {
+    const pulse = 0.5 + Math.sin(perfNow / 180) * 0.5;
+    capsule(ctx, p.x, p.y, PIT_W + 12 + pulse * 6, PIT_H + 12 + pulse * 6);
+    ctx.lineWidth = 3.5;
+    ctx.setLineDash([10, 7]);
+    ctx.lineDashOffset = -perfNow / 40;
+    ctx.strokeStyle = `rgba(240,207,90,${0.65 + pulse * 0.35})`;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
   }
 
   if (lifted) {
@@ -567,6 +581,10 @@ export function renderScene(
     playable?: number[];
     lastMove?: { from: number; to: number } | null;
     popups?: ScorePopup[];
+    /** Pit picked for a move that still awaits confirmation. */
+    selected?: number;
+    /** Pit where the selected move's last stone would land. */
+    previewTarget?: number;
   } = {},
 ) {
   const {
@@ -579,6 +597,8 @@ export function renderScene(
     playable = [],
     lastMove = null,
     popups = [],
+    selected = -1,
+    previewTarget = -1,
   } = options;
 
   drawPanels(ctx);
@@ -590,19 +610,20 @@ export function renderScene(
     const flashStart = invalidFlashes[idx];
     const flashAlpha = flashStart ? Math.max(0, 1 - (now - flashStart) / 260) : 0;
     drawPitWell(ctx, idx, {
-      lifted: idx === dragIdx,
+      lifted: idx === dragIdx || idx === selected,
       isTuzduk: state.tuzduk[0] === idx || state.tuzduk[1] === idx,
       invalidFlash: flashAlpha,
       perfNow: now,
       playable: playable.includes(idx),
-      lastMove: lastMove?.to === idx ? 'to' : lastMove?.from === idx ? 'from' : null,
+      lastMove: selected === -1 && lastMove ? (lastMove.to === idx ? 'to' : lastMove.from === idx ? 'from' : null) : null,
+      previewTarget: idx === previewTarget && previewTarget !== selected,
     });
   }
 
   for (let idx = 0; idx < 18; idx++) {
     if (idx === dragIdx) continue;
     const count = visualPits[idx];
-    drawPitStones(ctx, idx, count);
+    drawPitStones(ctx, idx, count, idx === selected);
     drawLabel(ctx, idx, count, labelAngle, labelScale);
   }
 

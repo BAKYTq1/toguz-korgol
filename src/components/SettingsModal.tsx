@@ -104,6 +104,26 @@ export default function SettingsModal({
           </button>
         </div>
 
+        {/* Move confirmation */}
+        <label className={styles.label}>{t(lang, 'confirmMoveLabel')}</label>
+        <div className={styles.pills}>
+          <button
+            className={`${styles.pill} ${settings.confirmMoves ? styles.active : ''}`}
+            onClick={() => onSettingsChange({ confirmMoves: true })}
+            aria-pressed={settings.confirmMoves}
+          >
+            {t(lang, 'settingOn')}
+          </button>
+          <button
+            className={`${styles.pill} ${!settings.confirmMoves ? styles.active : ''}`}
+            onClick={() => onSettingsChange({ confirmMoves: false })}
+            aria-pressed={!settings.confirmMoves}
+          >
+            {t(lang, 'settingOff')}
+          </button>
+        </div>
+        <p className={styles.note}>{t(lang, 'confirmMoveHint')}</p>
+
         {/* Stats */}
         <div className={styles.divider} />
         <label className={styles.label}>{t(lang, 'statsTitle')}</label>

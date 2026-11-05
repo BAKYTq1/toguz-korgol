@@ -1,13 +1,7 @@
 import type { User } from 'firebase/auth';
-import {
-  doc,
-  runTransaction,
-  serverTimestamp,
-  updateDoc,
-} from 'firebase/firestore';
 import type { Lang } from '../i18n/translations';
 import { t } from '../i18n/translations';
-import { firestore } from './firebase';
+import { loadFirebase } from './firebase';
 
 export interface ProfileStats {
   wins: number;
@@ -29,27 +23,30 @@ export function guestDisplayName(uid: string, lang: Lang) {
   return `${t(lang, 'guestName')} ${uid.slice(-5).toUpperCase()}`;
 }
 
-export async function ensureUserProfile(user: User, lang: Lang, legacyStats?: ProfileStats): Promise<void> {
-  if (!firestore) throw new Error('Firestore is not configured.');
-  const ref = doc(firestore, 'profiles', user.uid);
-  await runTransaction(firestore, async transaction => {
+/** Creates the profile if needed and resolves to the player's display name. */
+export async function ensureUserProfile(user: User, lang: Lang, legacyStats?: ProfileStats): Promise<string> {
+  const { db, fs } = await loadFirebase();
+  const ref = fs.doc(db, 'profiles', user.uid);
+  return fs.runTransaction(db, async transaction => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists()) {
+      const displayName = user.isAnonymous
+        ? guestDisplayName(user.uid, lang)
+        : (user.displayName || user.email?.split('@')[0] || t(lang, 'player1')).slice(0, 28);
       transaction.set(ref, {
-        displayName: user.isAnonymous
-          ? guestDisplayName(user.uid, lang)
-          : (user.displayName || user.email?.split('@')[0] || t(lang, 'player1')).slice(0, 28),
+        displayName,
         bio: '',
         stats: legacyStats ?? emptyProfileStats(),
         legacyStatsImported: Boolean(legacyStats),
         migratedGuestUids: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: fs.serverTimestamp(),
+        updatedAt: fs.serverTimestamp(),
       });
-      return;
+      return displayName;
     }
     const data = snapshot.data();
-    if (!legacyStats || data.legacyStatsImported) return;
+    const displayName = String(data.displayName || guestDisplayName(user.uid, lang));
+    if (!legacyStats || data.legacyStatsImported) return displayName;
     const current = (data.stats ?? emptyProfileStats()) as ProfileStats;
     transaction.update(ref, {
       stats: {
@@ -58,8 +55,9 @@ export async function ensureUserProfile(user: User, lang: Lang, legacyStats?: Pr
         draws: Math.max(current.draws, legacyStats.draws),
       },
       legacyStatsImported: true,
-      updatedAt: serverTimestamp(),
+      updatedAt: fs.serverTimestamp(),
     });
+    return displayName;
   });
 }
 
@@ -68,14 +66,15 @@ const DEFAULT_NAME = /^(Конок|Гость|Guest|Player) [A-Z0-9]{5}$/;
 
 /** After registration, replaces the automatic guest name with the account's own name. */
 export async function adoptAccountName(user: User): Promise<void> {
-  if (!firestore || user.isAnonymous) return;
+  if (user.isAnonymous) return;
   const name = (user.displayName || user.email?.split('@')[0] || '').trim().slice(0, 28);
   if (!name) return;
-  const ref = doc(firestore, 'profiles', user.uid);
-  await runTransaction(firestore, async transaction => {
+  const { db, fs } = await loadFirebase();
+  const ref = fs.doc(db, 'profiles', user.uid);
+  await fs.runTransaction(db, async transaction => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists() || !DEFAULT_NAME.test(String(snapshot.data().displayName ?? ''))) return;
-    transaction.update(ref, { displayName: name, updatedAt: serverTimestamp() });
+    transaction.update(ref, { displayName: name, updatedAt: fs.serverTimestamp() });
   });
 }
 
@@ -102,41 +101,44 @@ export function markLocalStatsImported() {
 }
 
 export async function saveUserProfile(uid: string, displayName: string, bio: string) {
-  if (!firestore) throw new Error('Firestore is not configured.');
-  await updateDoc(doc(firestore, 'profiles', uid), {
+  const { db, fs } = await loadFirebase();
+  await fs.updateDoc(fs.doc(db, 'profiles', uid), {
     displayName: displayName.trim().slice(0, 28),
     bio: bio.trim().slice(0, 160),
-    updatedAt: serverTimestamp(),
+    updatedAt: fs.serverTimestamp(),
   });
 }
 
 export async function recordProfileGame(uid: string, result: keyof ProfileStats) {
-  if (!firestore) return;
-  const ref = doc(firestore, 'profiles', uid);
-  await runTransaction(firestore, async transaction => {
+  const { db, fs } = await loadFirebase();
+  const ref = fs.doc(db, 'profiles', uid);
+  // One write in the common case; the transaction below only creates a missing profile.
+  try {
+    await fs.updateDoc(ref, { [`stats.${result}`]: fs.increment(1), updatedAt: fs.serverTimestamp() });
+    return;
+  } catch (error) {
+    if ((error as { code?: string }).code !== 'not-found') throw error;
+  }
+  await fs.runTransaction(db, async transaction => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists()) {
       const stats = emptyProfileStats();
       stats[result] = 1;
       transaction.set(ref, {
         displayName: `Player ${uid.slice(-5).toUpperCase()}`,
-        bio: '', stats, migratedGuestUids: [], updatedAt: serverTimestamp(),
+        bio: '', stats, migratedGuestUids: [], updatedAt: fs.serverTimestamp(),
       });
       return;
     }
-    const data = snapshot.data();
-    const current = (data.stats ?? emptyProfileStats()) as ProfileStats;
-    transaction.update(ref, {
-      [`stats.${result}`]: (current[result] ?? 0) + 1,
-      updatedAt: serverTimestamp(),
-    });
+    transaction.update(ref, { [`stats.${result}`]: fs.increment(1), updatedAt: fs.serverTimestamp() });
   });
 }
 
 export async function mergeGuestProfile(targetUid: string, guestUid: string, guest: UserProfile | null) {
-  if (!firestore || !guest || targetUid === guestUid) return;
-  const targetRef = doc(firestore, 'profiles', targetUid);
-  await runTransaction(firestore, async transaction => {
+  if (!guest || targetUid === guestUid) return;
+  const { db, fs } = await loadFirebase();
+  const targetRef = fs.doc(db, 'profiles', targetUid);
+  await fs.runTransaction(db, async transaction => {
     const snapshot = await transaction.get(targetRef);
     if (!snapshot.exists()) return;
     const data = snapshot.data();
@@ -151,7 +153,7 @@ export async function mergeGuestProfile(targetUid: string, guestUid: string, gue
         draws: current.draws + guest.stats.draws,
       },
       migratedGuestUids: [...migrated, guestUid],
-      updatedAt: serverTimestamp(),
+      updatedAt: fs.serverTimestamp(),
     });
   });
 }
