@@ -12,75 +12,138 @@
   z-index: 0;
 }
 
-.topControls {
+/* ─── Controls (desktop: pills at the top right) ─────────────────────────────── */
+.controls {
   position: fixed;
-  top: 14px;
-  left: 14px;
-  right: 14px;
+  top: calc(14px + var(--sat));
+  right: calc(14px + var(--sar));
   display: flex;
   gap: 8px;
   justify-content: flex-end;
   z-index: 6;
-  pointer-events: auto;
 }
 
-.topBtn {
-  background: rgba(20, 16, 14, 0.55);
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-family: 'Manrope', system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  cursor: pointer;
-  transition: 0.2s;
-  backdrop-filter: blur(3px);
-  border: 1px solid transparent;
+.ctrl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 38px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(87, 194, 184, 0.45);
+  background: rgba(20, 16, 14, 0.6);
+  color: var(--teal-light);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
   white-space: nowrap;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s, border-color 0.2s, transform 0.12s, color 0.2s;
 }
 
-.topBtn:focus-visible {
-  outline: 2px solid #57c2b8;
-  outline-offset: 2px;
-}
+.ctrl:hover { background: rgba(87, 194, 184, 0.15); }
+.ctrl:active { transform: scale(0.95); }
+.ctrl:focus-visible { outline: 2px solid var(--teal-light); outline-offset: 2px; }
 
-.topBtnTeal {
-  border-color: rgba(87, 194, 184, 0.45);
-  color: #57c2b8;
-}
-.topBtnTeal:hover { background: rgba(87, 194, 184, 0.15); }
+.ctrl svg { flex: 0 0 auto; }
 
-.topBtnGold {
-  border-color: rgba(212, 175, 55, 0.45);
-  color: #d4af37;
-  min-width: 32px;
-  text-align: center;
-}
-.topBtnGold:hover { background: rgba(212, 175, 55, 0.12); }
+/* Only the main actions show their label on wide screens. */
+.ctrlLabel { display: none; }
+.wide { padding: 0 15px 0 12px; }
+.wide .ctrlLabel { display: inline; }
 
-.topBtnLight {
-  border-color: rgba(242, 230, 204, 0.3);
-  color: #f2e6cc;
-}
-.topBtnLight:hover { background: rgba(87, 194, 184, 0.15); border-color: #57c2b8; }
+.gold { border-color: rgba(212, 175, 55, 0.45); color: var(--gold); }
+.gold:hover { background: rgba(212, 175, 55, 0.12); }
+
+.light { border-color: rgba(242, 230, 204, 0.35); color: var(--cream); }
+.light:hover { border-color: var(--teal-light); }
 
 .linked {
-  border-color: #d4af37 !important;
-  color: #d4af37 !important;
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
 .hint {
   position: fixed;
-  bottom: 2px;
+  bottom: calc(4px + var(--sab));
   left: 0;
   right: 0;
   text-align: center;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-body);
   font-size: 10px;
   opacity: 0.4;
   letter-spacing: 1px;
   font-weight: 500;
   z-index: 5;
   pointer-events: none;
-  color: #f2e6cc;
+  color: var(--cream);
+}
+
+/* ─── Phones, portrait: bottom tab bar ───────────────────────────────────────── */
+@media (max-width: 700px) and (orientation: portrait) {
+  .controls {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    gap: 0;
+    justify-content: space-around;
+    padding: 6px max(6px, var(--sar)) calc(6px + var(--sab)) max(6px, var(--sal));
+    background: linear-gradient(to bottom, rgba(18, 14, 12, 0.92), rgba(11, 9, 10, 0.98));
+    border-top: 1px solid rgba(212, 175, 55, 0.18);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .ctrl,
+  .wide {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 3px;
+    height: 52px;
+    min-width: 0;
+    padding: 4px 2px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(242, 230, 204, 0.72);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+
+  .ctrl:hover { background: transparent; }
+  .ctrl:active { background: rgba(87, 194, 184, 0.12); }
+
+  .ctrl svg { width: 22px; height: 22px; }
+
+  .ctrlLabel,
+  .wide .ctrlLabel {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gold, .light { color: rgba(242, 230, 204, 0.72); }
+  .linked { color: var(--gold); box-shadow: none; }
+  .linked svg { filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.6)); }
+
+  .hint { display: none; }
+}
+
+/* ─── Phones, landscape: compact icon buttons ────────────────────────────────── */
+@media (max-height: 520px) and (orientation: landscape) {
+  .controls { top: calc(6px + var(--sat)); gap: 6px; }
+  .ctrl, .wide { height: 34px; min-width: 34px; padding: 0 8px; }
+  .wide .ctrlLabel { display: none; }
+  .hint { display: none; }
 }

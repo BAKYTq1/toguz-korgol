@@ -1,0 +1,81 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 6, 4, 0.78);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.box {
+  width: 420px;
+  max-width: 100%;
+  max-height: min(90vh, 820px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 22px;
+  border: 1px solid rgba(87, 194, 184, 0.65);
+  border-radius: 18px;
+  background: linear-gradient(160deg, #2b2320, #16110f);
+  color: #f2e6cc;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+  font-family: 'Manrope', system-ui, sans-serif;
+}
+
+.heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.title { margin: 0; color: #57c2b8; font: italic 700 26px 'Cormorant Garamond', Georgia, serif; }
+.identity { margin: 3px 0 0; font-size: 12px; opacity: 0.65; }
+.iconClose { border: 0; background: transparent; color: #f2e6cc; font-size: 26px; cursor: pointer; }
+.loading { padding: 18px 0; text-align: center; opacity: 0.7; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin: 17px 0; }
+.stats > div { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 4px; border-radius: 10px; background: rgba(0, 0, 0, 0.24); }
+.stats strong { color: #57c2b8; font-size: 21px; }
+.stats span { font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.65; text-align: center; }
+
+.sectionTitle { margin: 18px 0 8px; color: #d4af37; font-size: 11px; letter-spacing: 1.3px; text-transform: uppercase; }
+.achievements { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.achievement { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 9px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; opacity: 0.5; }
+.achievement.earned { border-color: rgba(212, 175, 55, 0.42); background: rgba(212, 175, 55, 0.08); opacity: 1; }
+.badge { color: #d4af37; font-size: 20px; }
+.achievement b, .achievement small { display: block; }
+.achievement b { font-size: 10px; line-height: 1.35; }
+.achievement small { margin-top: 3px; font-size: 9px; line-height: 1.35; opacity: 0.65; }
+
+.fieldLabel { display: block; margin: 9px 0 4px; font-size: 10px; opacity: 0.7; }
+.input { width: 100%; box-sizing: border-box; padding: 10px 11px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9px; background: rgba(0, 0, 0, 0.3); color: #f2e6cc; font: 13px 'Manrope', system-ui, sans-serif; resize: vertical; }
+.input:focus { outline: none; border-color: #57c2b8; }
+.googleButton { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.primaryButton, .googleButton, .modeButton { width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 20px; font: 600 11px 'Manrope', system-ui, sans-serif; cursor: pointer; }
+.primaryButton { border: 1px solid #57c2b8; background: #2f8f89; color: #08201e; }
+.googleButton { border: 1px solid rgba(242, 230, 204, 0.25); background: transparent; color: #f2e6cc; }
+.modeButton { border: 0; background: transparent; color: #57c2b8; }
+.primaryButton:disabled, .googleButton:disabled, .modeButton:disabled { opacity: 0.5; cursor: wait; }
+.linkRow { display: flex; gap: 6px; }
+.linkRow .modeButton { flex: 1 1 0; }
+.signOutButton { width: 100%; margin-top: 16px; padding: 10px 12px; border: 1px solid rgba(181, 41, 47, 0.45); border-radius: 20px; background: transparent; color: #f0a19c; font: 600 11px 'Manrope', system-ui, sans-serif; cursor: pointer; }
+.signOutButton:disabled { opacity: 0.5; cursor: wait; }
+.upgradeHint { margin: -2px 0 6px; font-size: 11.5px; line-height: 1.45; opacity: 0.75; }
+.fieldHint { margin: 4px 0 0; font-size: 10px; opacity: 0.55; }
+.separator { height: 1px; margin: 17px 0 4px; background: rgba(255, 255, 255, 0.1); }
+.error, .notice { margin-top: 12px; padding: 9px 11px; border-radius: 8px; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.error { color: #ffaaa5; background: rgba(181, 41, 47, 0.14); }
+.notice { color: #9fe2dc; background: rgba(47, 143, 137, 0.14); }
+
+@media (max-width: 520px) {
+  .overlay { padding: 9px; align-items: flex-end; }
+  .box { width: 100%; max-height: 88vh; padding: 18px 15px calc(18px + var(--sab)); border-radius: 18px 18px 12px 12px; }
+  .title { font-size: 23px; }
+  .stats { gap: 5px; }
+  .stats > div { padding: 8px 2px; }
+  .stats strong { font-size: 19px; }
+  .achievements { grid-template-columns: 1fr; }
+  .input { font-size: 16px; }
+  .primaryButton, .googleButton, .modeButton, .signOutButton { min-height: 44px; font-size: 13px; }
+  .upgradeHint { font-size: 13px; }
+}

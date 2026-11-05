@@ -10,6 +10,7 @@
  * Rules summary:
  *  - Each player has 9 pits. The board starts with 9 stones per pit (162 total).
  *  - On your turn, pick any non-empty pit in your row and sow its stones one-by-one.
+ *    The first stone goes back into the same pit; a single stone moves to the next pit.
  *  - If the last stone lands in an opponent's pit making it even → capture to your kazan.
  *  - If the last stone makes an opponent's pit = 3 AND you have no tuzduk yet → that pit
  *    becomes your tuzduk (permanent toll gate). Tuzduk cannot be the opponent's last pit
@@ -35,6 +36,7 @@ export interface MoveResult {
   tuzdukCreated: boolean;
   ended: boolean;
   winner: Player | 'draw' | null;
+  gained: [number, number]; // stones each kazan received during this move
 }
 
 export interface GameState {
@@ -72,7 +74,7 @@ export function legalMoves(state: GameState, player: Player): number[] {
   const end = player === 0 ? 8 : 17;
   const moves: number[] = [];
   for (let i = start; i <= end; i++) {
-    if (state.pits[i] > 1) moves.push(i); // need at least 2 stones to sow (1 stays)
+    if (state.pits[i] > 0) moves.push(i);
   }
   return moves;
 }
@@ -85,15 +87,17 @@ export function applyMove(state: GameState, startIdx: number): { nextState: Game
   const player = state.current;
   const opponent: Player = player === 0 ? 1 : 0;
 
+  // The first stone goes back into the source pit; a lone stone moves on to the next pit.
   const stones = pits[startIdx];
-  pits[startIdx] = 1; // one stone always stays in the source pit
+  const toSow = stones === 1 ? 1 : stones - 1;
+  pits[startIdx] = stones === 1 ? 0 : 1;
 
   let pos = startIdx;
   const steps: SowStep[] = [];
   let captured = false;
   let tuzdukCreated = false;
 
-  for (let s = 0; s < stones - 1; s++) {
+  for (let s = 0; s < toSow; s++) {
     pos = nextIdx(pos);
 
     const isTuzduk0 = tuzduk[0] === pos;
@@ -198,7 +202,14 @@ export function applyMove(state: GameState, startIdx: number): { nextState: Game
 
   return {
     nextState,
-    result: { steps, captured, tuzdukCreated, ended, winner },
+    result: {
+      steps,
+      captured,
+      tuzdukCreated,
+      ended,
+      winner,
+      gained: [kazan[0] - state.kazan[0], kazan[1] - state.kazan[1]],
+    },
   };
 }
 
@@ -207,7 +218,7 @@ function legalMovesRaw(pits: number[], player: Player): number[] {
   const end = player === 0 ? 8 : 17;
   const moves: number[] = [];
   for (let i = start; i <= end; i++) {
-    if (pits[i] > 1) moves.push(i); // need at least 2 stones to sow (1 stays)
+    if (pits[i] > 0) moves.push(i);
   }
   return moves;
 }

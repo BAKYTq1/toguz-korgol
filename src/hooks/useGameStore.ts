@@ -162,7 +162,7 @@ export function useGameStore() {
     if (state.animating || state.game.gameOver) return null;
     const player = state.game.current;
     if (idx < (player === 0 ? 0 : 9) || idx > (player === 0 ? 8 : 17)) return null;
-    if (state.game.pits[idx] <= 1) return null; // need at least 2 stones (1 stays)
+    if (state.game.pits[idx] <= 0) return null;
 
     const { nextState, result } = applyMove(state.game, idx);
     dispatch({ type: 'MOVE', idx, result, nextGame: nextState });

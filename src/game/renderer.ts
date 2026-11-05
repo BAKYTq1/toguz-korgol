@@ -21,6 +21,13 @@ export interface RenderLayout {
   scale: number;
   offX: number;
   offY: number;
+  portrait: boolean;
+  /** Board turned 180° so that player 0's row is closest to the viewer. */
+  flipped: boolean;
+}
+
+export function isPortraitViewport(windowW: number, windowH: number) {
+  return windowH > windowW && windowW < 700;
 }
 
 export function computeLayout(
@@ -28,13 +35,52 @@ export function computeLayout(
   windowH: number,
   availTop: number,
   availBottom: number,
+  flipped = false,
 ): RenderLayout {
+  const portrait = isPortraitViewport(windowW, windowH);
+  if (portrait) {
+    const availW = windowW * 0.97;
+    const availH = Math.max(1, windowH - availTop - availBottom);
+    const scale = Math.min(availW / BASE_H, availH / BASE_W);
+    return {
+      scale,
+      offX: (windowW - BASE_H * scale) / 2,
+      offY: availTop + (availH - BASE_W * scale) / 2,
+      portrait: true,
+      flipped,
+    };
+  }
+
   const availW = windowW * 0.95;
-  const availH = windowH - availTop - availBottom;
+  const availH = Math.max(1, windowH - availTop - availBottom);
   const scale = Math.min(availW / BASE_W, availH / BASE_H) * 0.96;
   const offX = (windowW - BASE_W * scale) / 2;
   const offY = availTop + (availH - BASE_H * scale) / 2;
-  return { scale, offX, offY };
+  return { scale, offX, offY, portrait: false, flipped };
+}
+
+/** Maps logical board space onto the screen (scale, portrait rotation, perspective flip). */
+export function applyBoardTransform(ctx: CanvasRenderingContext2D, layout: RenderLayout) {
+  if (layout.portrait) {
+    ctx.translate(layout.offX + BASE_H * layout.scale, layout.offY);
+    ctx.rotate(Math.PI / 2);
+  } else {
+    ctx.translate(layout.offX, layout.offY);
+  }
+  ctx.scale(layout.scale, layout.scale);
+  if (layout.flipped) {
+    ctx.translate(BASE_W, BASE_H);
+    ctx.rotate(Math.PI);
+  }
+}
+
+/** Rotation that keeps text upright after applyBoardTransform. */
+export function uprightAngle(layout: RenderLayout) {
+  return -((layout.portrait ? Math.PI / 2 : 0) + (layout.flipped ? Math.PI : 0));
+}
+
+export function isInsideBoard(p: { x: number; y: number }) {
+  return p.x >= 0 && p.x <= BASE_W && p.y >= 0 && p.y <= BASE_H;
 }
 
 export function pitCenter(idx: number): { x: number; y: number } {
@@ -57,12 +103,29 @@ export function kazanCenter(player: 0 | 1): { x: number; y: number } {
     : { x: KAZAN_W / 2, y: BASE_H / 2 };
 }
 
-export function toScreen(p: { x: number; y: number }, layout: RenderLayout) {
+function flip(p: { x: number; y: number }, layout: RenderLayout) {
+  return layout.flipped ? { x: BASE_W - p.x, y: BASE_H - p.y } : p;
+}
+
+export function toScreen(point: { x: number; y: number }, layout: RenderLayout) {
+  const p = flip(point, layout);
+  if (layout.portrait) {
+    return {
+      x: (BASE_H - p.y) * layout.scale + layout.offX,
+      y: p.x * layout.scale + layout.offY,
+    };
+  }
   return { x: p.x * layout.scale + layout.offX, y: p.y * layout.scale + layout.offY };
 }
 
 export function toLogical(sx: number, sy: number, layout: RenderLayout) {
-  return { x: (sx - layout.offX) / layout.scale, y: (sy - layout.offY) / layout.scale };
+  if (layout.portrait) {
+    return flip({
+      x: (sy - layout.offY) / layout.scale,
+      y: BASE_H - (sx - layout.offX) / layout.scale,
+    }, layout);
+  }
+  return flip({ x: (sx - layout.offX) / layout.scale, y: (sy - layout.offY) / layout.scale }, layout);
 }
 
 export function pitAt(lx: number, ly: number): number {
@@ -201,11 +264,20 @@ export function drawPitWell(
     isTuzduk?: boolean;
     invalidFlash?: number; // 0-1 alpha
     perfNow?: number;
+    playable?: boolean;
+    lastMove?: 'from' | 'to' | null;
   } = {},
 ) {
   const p = pitCenter(idx);
   const dark = ownerOf(idx) === 0;
-  const { lifted = false, isTuzduk = false, invalidFlash = 0, perfNow = 0 } = options;
+  const {
+    lifted = false,
+    isTuzduk = false,
+    invalidFlash = 0,
+    perfNow = 0,
+    playable = false,
+    lastMove = null,
+  } = options;
 
   ctx.save();
   if (lifted) {
@@ -235,6 +307,23 @@ export function drawPitWell(
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'rgba(87,194,184,0.14)';
   ctx.stroke();
+
+  if (playable && !lifted) {
+    const pulse = 0.5 + Math.sin(perfNow / 420) * 0.5;
+    capsule(ctx, p.x, p.y, PIT_W + 6, PIT_H + 6);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = `rgba(87,194,184,${0.35 + pulse * 0.35})`;
+    ctx.stroke();
+  }
+
+  if (lastMove) {
+    capsule(ctx, p.x, p.y, PIT_W + 4, PIT_H + 4);
+    ctx.lineWidth = 2;
+    ctx.setLineDash(lastMove === 'from' ? [6, 6] : []);
+    ctx.strokeStyle = lastMove === 'from' ? 'rgba(212,175,55,0.6)' : 'rgba(212,175,55,0.9)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   if (lifted) {
     capsule(ctx, p.x, p.y, PIT_W, PIT_H);
@@ -345,14 +434,23 @@ export function drawKazanStones(ctx: CanvasRenderingContext2D, player: 0 | 1, co
   }
 }
 
-export function drawLabel(ctx: CanvasRenderingContext2D, idx: number, count: number) {
+/** Enlarges pit counters on small boards so they stay readable (~12px on screen). */
+export function labelScaleFor(layout: RenderLayout) {
+  return Math.min(1.6, Math.max(1, 12 / (15 * layout.scale)));
+}
+
+export function drawLabel(ctx: CanvasRenderingContext2D, idx: number, count: number, angle = 0, k = 1) {
   const empty = count <= 0;
   const p = pitCenter(idx);
-  const ly = p.y - PIT_H / 2 - 16;
+  const ly = p.y - PIT_H / 2 - 16 * k;
   ctx.font = '800 15px Manrope, system-ui, sans-serif';
   const txt = String(count);
   const tw = ctx.measureText(txt).width;
-  roundRect(ctx, p.x - tw / 2 - 7, ly - 11, tw + 14, 22, 11);
+  ctx.save();
+  ctx.translate(p.x, ly + 1);
+  if (angle) ctx.rotate(angle);
+  if (k !== 1) ctx.scale(k, k);
+  roundRect(ctx, -tw / 2 - 7, -11, tw + 14, 22, 11);
   ctx.fillStyle = empty ? 'rgba(10,8,6,0.45)' : 'rgba(10,8,6,0.8)';
   ctx.fill();
   ctx.strokeStyle = empty ? 'rgba(87,194,184,0.25)' : 'rgba(87,194,184,0.55)';
@@ -361,7 +459,8 @@ export function drawLabel(ctx: CanvasRenderingContext2D, idx: number, count: num
   ctx.fillStyle = empty ? 'rgba(255,248,232,0.45)' : '#fff8e8';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(txt, p.x, ly + 1);
+  ctx.fillText(txt, 0, 0);
+  ctx.restore();
 }
 
 // ─── Flying beads ──────────────────────────────────────────────────────────────
@@ -420,6 +519,36 @@ export function drawDragBeads(
   }
 }
 
+// ─── Score popups ("+12" rising from a kazan) ──────────────────────────────────
+export interface ScorePopup {
+  text: string;
+  x: number;
+  y: number;
+  t0: number;
+}
+
+export const POPUP_DURATION = 1300;
+
+export function drawPopup(ctx: CanvasRenderingContext2D, popup: ScorePopup, now: number, angle: number) {
+  const t = Math.min(1, Math.max(0, (now - popup.t0) / POPUP_DURATION));
+  const alpha = t < 0.15 ? t / 0.15 : 1 - Math.max(0, t - 0.55) / 0.45;
+  ctx.save();
+  ctx.translate(popup.x, popup.y);
+  ctx.rotate(angle);
+  ctx.translate(0, -t * 46);
+  ctx.scale(1 + (1 - t) * 0.15, 1 + (1 - t) * 0.15);
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.font = '800 34px Manrope, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = 'rgba(10,8,6,0.85)';
+  ctx.strokeText(popup.text, 0, 0);
+  ctx.fillStyle = '#f0cf5a';
+  ctx.fillText(popup.text, 0, 0);
+  ctx.restore();
+}
+
 // Full scene render — called every rAF
 export function renderScene(
   ctx: CanvasRenderingContext2D,
@@ -433,9 +562,24 @@ export function renderScene(
     dragPt?: { x: number; y: number } | null;
     dragCount?: number;
     invalidFlashes?: Record<number, number>;
+    labelAngle?: number;
+    labelScale?: number;
+    playable?: number[];
+    lastMove?: { from: number; to: number } | null;
+    popups?: ScorePopup[];
   } = {},
 ) {
-  const { dragIdx = -1, dragPt = null, dragCount = 0, invalidFlashes = {} } = options;
+  const {
+    dragIdx = -1,
+    dragPt = null,
+    dragCount = 0,
+    invalidFlashes = {},
+    labelAngle = 0,
+    labelScale = 1,
+    playable = [],
+    lastMove = null,
+    popups = [],
+  } = options;
 
   drawPanels(ctx);
   drawGrain(ctx);
@@ -450,6 +594,8 @@ export function renderScene(
       isTuzduk: state.tuzduk[0] === idx || state.tuzduk[1] === idx,
       invalidFlash: flashAlpha,
       perfNow: now,
+      playable: playable.includes(idx),
+      lastMove: lastMove?.to === idx ? 'to' : lastMove?.from === idx ? 'from' : null,
     });
   }
 
@@ -457,7 +603,7 @@ export function renderScene(
     if (idx === dragIdx) continue;
     const count = visualPits[idx];
     drawPitStones(ctx, idx, count);
-    drawLabel(ctx, idx, count);
+    drawLabel(ctx, idx, count, labelAngle, labelScale);
   }
 
   flying.forEach(f => drawFlyingBead(ctx, f, now));
@@ -465,4 +611,6 @@ export function renderScene(
   if (dragIdx >= 0 && dragPt) {
     drawDragBeads(ctx, dragPt, dragCount, now);
   }
+
+  popups.forEach(p => drawPopup(ctx, p, now, labelAngle));
 }

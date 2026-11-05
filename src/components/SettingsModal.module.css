@@ -150,3 +150,25 @@
 
 .closeBtn:hover { background: rgba(255, 255, 255, 0.06); }
 .closeBtn:focus-visible { outline: 2px solid #57c2b8; }
+
+/* Phones: bottom sheet with finger-sized controls */
+@media (max-width: 520px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .box {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px - var(--sat));
+    border-radius: 20px 20px 0 0;
+    border-width: 1px 0 0;
+    padding: 20px 18px calc(20px + var(--sab));
+    animation: sheetUp 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .pills { flex-wrap: wrap; }
+  .pill { flex: 1 1 auto; min-height: 42px; font-size: 13px; }
+  .resetBtn, .closeBtn { min-height: 44px; font-size: 13px; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

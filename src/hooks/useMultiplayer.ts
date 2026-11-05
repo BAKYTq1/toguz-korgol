@@ -3,6 +3,7 @@ import { signInAnonymously } from 'firebase/auth';
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   onSnapshot,
@@ -17,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import type { Player } from '../game/engine';
 import { firebaseAuth, firebaseConfigured, firestore } from '../lib/firebase';
+import { ensureUserProfile, guestDisplayName } from '../lib/profile';
 import { t } from '../i18n/translations';
 import type { Lang } from '../i18n/translations';
 
@@ -27,6 +29,7 @@ export interface MPState {
   myPlayer: Player | null;
   room: string | null;
   message: string;
+  playerNames: [string | null, string | null];
 }
 
 export interface MPCallbacks {
@@ -39,6 +42,8 @@ interface RoomData {
   status: 'waiting' | 'playing' | 'closed';
   player0: string;
   player1: string | null;
+  name0?: string;
+  name1?: string;
   turn: Player;
   revision: number;
   event?: { type: 'move' | 'restart'; idx?: number; from: string; revision: number };
@@ -49,7 +54,7 @@ interface RoomData {
 }
 
 export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
-  const [mp, setMp] = useState<MPState>({ status: 'idle', myPlayer: null, room: null, message: '' });
+  const [mp, setMp] = useState<MPState>({ status: 'idle', myPlayer: null, room: null, message: '', playerNames: [null, null] });
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
   const roomRef = useRef<DocumentReference | null>(null);
@@ -94,6 +99,7 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
       }
 
       const room = snapshot.data() as RoomData;
+      updateMp({ playerNames: [room.name0 ?? null, room.name1 ?? null] });
       if (room.status === 'closed') {
         updateMp({ status: 'disconnected', message: t(lang, 'opponentLeft') });
         callbacksRef.current.onPeerLeft();
@@ -127,13 +133,22 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
     }
 
     clearListener();
-    updateMp({ status: 'connecting', message: 'Подключаемся к онлайн-игре…', room: null, myPlayer: null });
+    updateMp({ status: 'connecting', message: t(lang, 'onlineConnecting'), room: null, myPlayer: null, playerNames: [null, null] });
     try {
       const credential = firebaseAuth.currentUser
         ? { user: firebaseAuth.currentUser }
         : await signInAnonymously(firebaseAuth);
       const uid = credential.user.uid;
       uidRef.current = uid;
+      // The profile only provides a display name; matchmaking must not depend on it.
+      let displayName = guestDisplayName(uid, lang);
+      try {
+        await ensureUserProfile(credential.user, lang);
+        const profileSnapshot = await getDoc(doc(firestore, 'profiles', uid));
+        displayName = (profileSnapshot.data()?.displayName as string | undefined) || displayName;
+      } catch (error) {
+        console.warn('Could not load the player profile, playing as a guest', error);
+      }
 
       const waitingQuery = query(collection(firestore, 'rooms'), where('status', '==', 'waiting'), limit(20));
       const waitingRooms = await getDocs(waitingQuery);
@@ -157,14 +172,28 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
         }
 
         const candidateRef = doc(firestore, 'rooms', candidate.id);
-        const paired = await runTransaction(firestore, async transaction => {
+        const claimRoom = (withName: boolean) => runTransaction(firestore!, async transaction => {
           const fresh = await transaction.get(candidateRef);
           if (!fresh.exists()) return false;
           const current = fresh.data() as RoomData;
           if (current.status !== 'waiting' || current.player1 || current.player0 === uid) return false;
-          transaction.update(candidateRef, { player1: uid, status: 'playing', lastSeen1: serverTimestamp(), updatedAt: serverTimestamp() });
+          transaction.update(candidateRef, {
+            player1: uid,
+            ...(withName ? { name1: displayName } : {}),
+            status: 'playing',
+            lastSeen1: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
           return true;
         });
+        let paired: boolean;
+        try {
+          paired = await claimRoom(true);
+        } catch (error) {
+          // Older deployed security rules do not allow the name field yet.
+          if ((error as { code?: string }).code !== 'permission-denied') throw error;
+          paired = await claimRoom(false);
+        }
         if (paired) {
           watchRoom(candidateRef, uid, 1);
           return;
@@ -174,6 +203,7 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
       const newRoom = doc(collection(firestore, 'rooms'));
       await setDoc(newRoom, {
         status: 'waiting', player0: uid, player1: null, turn: 0, revision: 0,
+        name0: displayName, name1: null,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(), lastSeen0: serverTimestamp(),
       });
       watchRoom(newRoom, uid, 0);
@@ -181,7 +211,7 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
       const detail = error instanceof Error ? error.message : String(error);
       updateMp({ status: 'error', message: `Не удалось подключиться к Firebase: ${detail}` });
     }
-  }, [clearListener, updateMp, watchRoom]);
+  }, [clearListener, lang, updateMp, watchRoom]);
 
   const sendMove = useCallback(async (idx: number) => {
     const roomRefValue = roomRef.current;
@@ -251,7 +281,7 @@ export function useMultiplayer(callbacks: MPCallbacks, lang: Lang) {
         // The local session still resets if the network is already gone.
       }
     }
-    updateMp({ status: 'idle', myPlayer: null, room: null, message: '' });
+    updateMp({ status: 'idle', myPlayer: null, room: null, message: '', playerNames: [null, null] });
   }, [clearListener, updateMp]);
 
   const randomRoom = useCallback((): string => {

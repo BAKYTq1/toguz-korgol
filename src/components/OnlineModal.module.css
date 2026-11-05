@@ -155,3 +155,24 @@
   transition: 0.2s;
 }
 .disconnectBtn:hover { background: rgba(181, 41, 47, 0.15); }
+
+/* Phones: bottom sheet with finger-sized controls */
+@media (max-width: 520px) {
+  .overlay { align-items: flex-end; padding: 0; }
+  .box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    border-width: 1px 0 0;
+    padding: 22px 18px calc(20px + var(--sab));
+    animation: sheetUp 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .hint, .status { font-size: 13px; }
+  .footer { flex-direction: column-reverse; align-items: stretch; }
+  .closeBtn, .disconnectBtn { min-height: 44px; font-size: 13px; }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

@@ -8,7 +8,7 @@ interface HeaderProps {
 export default function Header({ lang }: HeaderProps) {
   return (
     <>
-      <header className={styles.header}>
+      <header className={styles.header} data-hud="top">
         <Tunduk />
         <h1 className={styles.title}>{t(lang, 'title')}</h1>
         <Tunduk />

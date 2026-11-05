@@ -10,14 +10,18 @@ interface TurnBannerProps {
   p2Name?: string;
   onlineStatus?: MPStatus | null;
   myPlayer?: 0 | 1 | null;
+  aiPlayer?: 0 | 1 | null;
 }
 
-export default function TurnBanner({ current, gameOver, lang, p1Name, p2Name, onlineStatus, myPlayer }: TurnBannerProps) {
+export default function TurnBanner({ current, gameOver, lang, p1Name, p2Name, onlineStatus, myPlayer, aiPlayer }: TurnBannerProps) {
   const names = [p1Name ?? t(lang, 'player1'), p2Name ?? t(lang, 'player2')];
 
-  if (gameOver) return <div className={styles.banner}>—</div>;
+  if (gameOver) {
+    return <div className={styles.banner} data-hud="bottom" role="status">{t(lang, 'gameOver')}</div>;
+  }
 
   if (onlineStatus) {
+    const myTurn = current === myPlayer;
     const statusText = onlineStatus === 'connecting'
       ? t(lang, 'onlineConnecting')
       : onlineStatus === 'waiting'
@@ -26,15 +30,36 @@ export default function TurnBanner({ current, gameOver, lang, p1Name, p2Name, on
           ? t(lang, 'opponentLeft')
           : onlineStatus === 'error'
             ? t(lang, 'connectError')
-            : `${t(lang, 'onlineConnected')} · ${t(lang, current === myPlayer ? 'yourTurn' : 'opponentTurn')}`;
+            : onlineStatus === 'idle'
+              ? t(lang, 'onlineIdle')
+              : t(lang, myTurn ? 'yourTurn' : 'opponentTurn');
 
     return (
-      <div className={styles.banner} role="status" aria-live="polite">
+      <div
+        className={`${styles.banner} ${onlineStatus === 'playing' && myTurn ? styles.mine : ''}`}
+        data-hud="bottom"
+        role="status"
+        aria-live="polite"
+      >
         <span className={`${styles.dot} ${styles[onlineStatus]}`} aria-hidden="true" />
         <span>{statusText}</span>
       </div>
     );
   }
 
-  return <div className={styles.banner}>{t(lang, 'turnLabel')} <b>{names[current]}</b></div>;
+  if (aiPlayer !== null && aiPlayer !== undefined) {
+    const aiTurn = current === aiPlayer;
+    return (
+      <div className={`${styles.banner} ${aiTurn ? '' : styles.mine}`} data-hud="bottom" role="status" aria-live="polite">
+        {aiTurn && <span className={styles.thinking} aria-hidden="true"><i /><i /><i /></span>}
+        <span>{t(lang, aiTurn ? 'aiThinking' : 'yourTurn')}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.banner} data-hud="bottom" role="status" aria-live="polite">
+      {t(lang, 'turnLabel')} <b>{names[current]}</b>
+    </div>
+  );
 }
