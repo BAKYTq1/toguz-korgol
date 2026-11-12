@@ -1,0 +1,11 @@
+.progress { display: flex; gap: 6px; }
+
+.progress span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(242, 230, 204, 0.12);
+  transition: background 0.3s;
+}
+
+.progress .filled { background: var(--gold); }

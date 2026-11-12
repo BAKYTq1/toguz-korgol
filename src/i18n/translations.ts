@@ -86,6 +86,7 @@ export type TranslationKey =
   | 'opponentLeft'
   | 'connectionLost'
   | 'connectError'
+  | 'navHome'
   | 'navOnline'
   | 'navProfile'
   | 'navSettings'
@@ -236,6 +237,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Каршылаш чыгып кетти.',
     connectionLost: 'Байланыш үзүлдү.',
     connectError: 'Туташуу мүмкүн эмес. Серверди текшериңиз.',
+    navHome: 'Оюндар',
     navOnline: 'Онлайн',
     navProfile: 'Профиль',
     navSettings: 'Жөндөө',
@@ -394,6 +396,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Соперник отключился.',
     connectionLost: 'Соединение потеряно.',
     connectError: 'Не удалось подключиться. Проверьте адрес сервера.',
+    navHome: 'Игры',
     navOnline: 'Онлайн',
     navProfile: 'Профиль',
     navSettings: 'Настройки',
@@ -552,6 +555,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Opponent disconnected.',
     connectionLost: 'Connection lost.',
     connectError: 'Could not connect. Check the server address.',
+    navHome: 'Games',
     navOnline: 'Online',
     navProfile: 'Profile',
     navSettings: 'Settings',

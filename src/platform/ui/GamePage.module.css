@@ -1,0 +1,42 @@
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(242, 230, 204, 0.1);
+  background: rgba(20, 15, 16, 0.6);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.toMove { border-color: var(--teal-light); box-shadow: 0 0 0 3px rgba(87, 194, 184, 0.14); }
+
+.scoreName { font-weight: 700; font-size: 14px; color: rgba(242, 230, 204, 0.85); }
+
+.scoreValue {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.statusRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 44px; }
+.status { font-size: 17px; color: var(--cream); }
+.spacer { flex: 1; }
+
+.rules summary { cursor: pointer; list-style-position: inside; }
+.rules[open] summary { margin-bottom: 8px; }

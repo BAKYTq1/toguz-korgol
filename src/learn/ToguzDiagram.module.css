@@ -1,0 +1,139 @@
+/* Materials follow the game board (src/game/renderer.ts): dark and cream halves, teal korgools. */
+.board {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.panel {
+  padding: clamp(14px, 2.6vw, 20px) clamp(6px, 1.6vw, 14px) clamp(6px, 1.4vw, 10px);
+  border-radius: 14px;
+}
+
+.dark {
+  background: linear-gradient(180deg, #1d1915, #0e0c0a);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+.light {
+  background: linear-gradient(180deg, #f1ead3, #ddd3b4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+.hinge {
+  height: 7px;
+  margin: 3px 2%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #d9dcdf, #8b9095 55%, #5d6166);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.row { display: grid; grid-template-columns: repeat(9, 1fr); gap: clamp(3px, 1vw, 9px); }
+
+.pit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.well {
+  width: 100%;
+  aspect-ratio: 0.56;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.dark .well { background: #050403; border-color: rgba(47, 143, 137, 0.55); box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.9); }
+.light .well { background: linear-gradient(180deg, #b9ae8c, #a59a79); box-shadow: inset 0 3px 8px rgba(70, 55, 25, 0.45); }
+
+/* Stone counter: a dark bubble over the pit, as in the game. */
+.count {
+  position: absolute;
+  top: calc(-1 * clamp(9px, 1.8vw, 12px));
+  min-width: clamp(18px, 3.4vw, 24px);
+  height: clamp(18px, 3.4vw, 24px);
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0b0908;
+  border: 1.5px solid rgba(242, 230, 204, 0.85);
+  color: #fff;
+  font-size: clamp(10px, 2vw, 12px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
+}
+
+.number { font-size: 10px; font-weight: 700; }
+.dark .number { color: rgba(242, 230, 204, 0.4); }
+.light .number { color: rgba(60, 45, 20, 0.55); }
+
+.beads {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: clamp(1px, 0.4vw, 3px);
+  pointer-events: none;
+}
+
+.bead {
+  width: clamp(5px, 1.5vw, 11px);
+  height: clamp(5px, 1.5vw, 11px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #a6efe6, #3aa39c 45%, #12504b 100%);
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.55);
+}
+
+.playable { cursor: pointer; }
+.light .playable .well { border-color: rgba(47, 143, 137, 0.75); }
+.playable:hover .well { border-color: #2f8f89; box-shadow: inset 0 3px 8px rgba(70, 55, 25, 0.45), 0 0 0 2px rgba(47, 143, 137, 0.35); }
+.playable:active .well { transform: scale(0.96); }
+.playable:focus-visible { outline: none; }
+.playable:focus-visible .well { box-shadow: 0 0 0 3px #2f8f89; }
+
+.highlight .well { border-color: var(--gold) !important; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.55), 0 0 16px rgba(212, 175, 55, 0.45) !important; }
+.active .well { box-shadow: 0 0 0 3px var(--gold) !important; }
+.flash .well { animation: flash 0.9s ease-out; }
+
+@keyframes flash {
+  from { box-shadow: 0 0 0 4px #e2777b; }
+}
+
+/* A tuzduk: the pit is marked and its counter shows a cross. */
+.tuzduk .well { background: repeating-linear-gradient(45deg, #3b1214 0 6px, #2a0b0c 6px 12px) !important; border-color: #b5292f !important; }
+.tuzduk .count { background: #b5292f; border-color: #f0b3b5; }
+
+.kazan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: box-shadow 0.15s;
+}
+
+.kazan:first-child { margin-bottom: 10px; }
+.kazan:last-child { margin-top: 10px; }
+
+.kazanDark { background: #0e0c0a; border: 1px solid rgba(47, 143, 137, 0.35); color: var(--cream); }
+.kazanLight { background: #e9e1c8; color: #2a2014; }
+.kazanActive { box-shadow: 0 0 0 3px var(--gold); }
+
+.kazanName { font-size: 12px; font-weight: 700; letter-spacing: 0.3px; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kazanValue { font-size: clamp(18px, 3.4vw, 24px); font-weight: 800; font-variant-numeric: tabular-nums; }

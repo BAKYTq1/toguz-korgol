@@ -1,0 +1,61 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.points { color: var(--gold); }
+.winner { font-size: 17px; border-color: rgba(212, 175, 55, 0.45); background: rgba(212, 175, 55, 0.1); }
+
+.pairings { list-style: none; display: flex; flex-direction: column; }
+
+.pairing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(242, 230, 204, 0.07);
+}
+
+.pairing:first-child { border-top: none; }
+
+.boardNo {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: rgba(242, 230, 204, 0.07);
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(242, 230, 204, 0.6);
+}
+
+.players { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; flex: 1; min-width: 160px; }
+.first { color: var(--teal-light); font-size: 9px; vertical-align: middle; }
+.result { font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.results { display: inline-flex; gap: 4px; }
+
+.results button {
+  min-height: 34px;
+  min-width: 54px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(242, 230, 204, 0.16);
+  background: rgba(10, 8, 9, 0.4);
+  color: rgba(242, 230, 204, 0.75);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.results button[aria-pressed='true'] { border-color: var(--gold); background: rgba(212, 175, 55, 0.18); color: var(--gold); }
+.results button:focus-visible { outline: 2px solid var(--teal-light); }
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; }
+}
