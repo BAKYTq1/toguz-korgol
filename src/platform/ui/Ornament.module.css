@@ -1,0 +1,14 @@
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--gold-dim);
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.35));
+}
+
+.line:last-child { background: linear-gradient(to left, transparent, rgba(212, 175, 55, 0.35)); }

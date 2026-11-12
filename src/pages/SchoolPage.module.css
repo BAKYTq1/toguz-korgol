@@ -1,0 +1,62 @@
+.steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(242, 230, 204, 0.82);
+}
+
+.stepNo {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+
+.classLink {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(10, 8, 9, 0.4);
+  color: var(--cream);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.classLink:hover { background: rgba(87, 194, 184, 0.1); }
+
+.code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+.codeInput {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  font-size: 20px;
+}
+
+@media (max-width: 860px) {
+  .steps, .columns { grid-template-columns: 1fr; }
+}

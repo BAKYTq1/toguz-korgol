@@ -1,6 +1,16 @@
-export type IconName = 'online' | 'user' | 'settings' | 'rules' | 'restart';
+// `home` is a yurt: home for a nomad, and unlike a house or a grid it cannot be mistaken for 'online'.
+export type IconName = 'home' | 'online' | 'user' | 'settings' | 'rules' | 'restart';
 
 const paths: Record<IconName, JSX.Element> = {
+  home: (
+    <>
+      <path d="M2.5 20.5h19" />
+      <path d="M4.5 20.5v-7.2M19.5 20.5v-7.2" />
+      <path d="M3.6 13.6C5.6 8.6 8.6 5.9 12 5.5c3.4.4 6.4 3.1 8.4 8.1" />
+      <path d="M10.2 5.8 12 3.6l1.8 2.2" />
+      <path d="M10 20.5v-4.6c0-1.1.9-2 2-2s2 .9 2 2v4.6" />
+    </>
+  ),
   online: (
     <>
       <circle cx="12" cy="12" r="9" />

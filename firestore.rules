@@ -101,6 +101,78 @@ service cloud.firestore {
         validStat(data.stats.wins) && validStat(data.stats.losses) && validStat(data.stats.draws);
     }
 
+    // ── Tournaments: public to follow by link, changed only by the organiser. ──
+    function validTournament(d) {
+      return d.keys().hasOnly(['name', 'game', 'format', 'plannedRounds', 'players', 'rounds',
+          'status', 'ownerUid', 'classCode', 'createdAt', 'updatedAt']) &&
+        d.name is string && d.name.size() > 0 && d.name.size() <= 80 &&
+        d.game in ['toguz-korgool', 'mangala'] &&
+        d.format in ['round-robin', 'swiss'] &&
+        d.plannedRounds is int && d.plannedRounds >= 1 && d.plannedRounds <= 64 &&
+        d.players is list && d.players.size() >= 2 && d.players.size() <= 64 &&
+        d.rounds is list && d.rounds.size() <= 64 &&
+        d.status in ['running', 'finished'] &&
+        (d.classCode == null || (d.classCode is string && d.classCode.size() <= 12));
+    }
+
+    match /tournaments/{tournamentId} {
+      // Open to anyone holding the (unguessable) link, but not listable: class tournaments
+      // carry students' names. Organisers list only their own.
+      allow get: if true;
+      allow list: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        validTournament(request.resource.data);
+      allow update: if signedIn() &&
+        resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        validTournament(request.resource.data);
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ── School classes: the teacher owns the class and sees every student's progress. ──
+    function validClass(d) {
+      return d.keys().hasOnly(['name', 'teacherUid', 'teacherName', 'createdAt']) &&
+        d.name is string && d.name.size() > 0 && d.name.size() <= 60 &&
+        d.teacherName is string && d.teacherName.size() <= 40;
+    }
+
+    function validStudent(d) {
+      return d.keys().hasOnly(['name', 'lessons', 'puzzles', 'joinedAt', 'updatedAt']) &&
+        d.name is string && d.name.size() > 0 && d.name.size() <= 40 &&
+        d.lessons is list && d.lessons.size() <= 200 &&
+        d.puzzles is list && d.puzzles.size() <= 500;
+    }
+
+    match /classes/{code} {
+      function isTeacher() {
+        return get(/databases/$(database)/documents/classes/$(code)).data.teacherUid == request.auth.uid;
+      }
+
+      // Anyone signed in may open a class by its code (to join); only teachers list their own.
+      allow get: if signedIn();
+      allow list: if signedIn() && resource.data.teacherUid == request.auth.uid;
+      allow create: if signedIn() && code.size() == 6 &&
+        request.resource.data.teacherUid == request.auth.uid &&
+        validClass(request.resource.data);
+      allow update: if signedIn() &&
+        resource.data.teacherUid == request.auth.uid &&
+        request.resource.data.teacherUid == request.auth.uid &&
+        validClass(request.resource.data);
+      allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
+
+      match /students/{studentUid} {
+        allow read: if signedIn() && (request.auth.uid == studentUid || isTeacher());
+        allow create: if signedIn() && request.auth.uid == studentUid &&
+          exists(/databases/$(database)/documents/classes/$(code)) &&
+          validStudent(request.resource.data);
+        allow update: if signedIn() && request.auth.uid == studentUid && validStudent(request.resource.data);
+        allow delete: if signedIn() && (request.auth.uid == studentUid || isTeacher());
+      }
+    }
+
     match /profiles/{userId} {
       // Each guest or registered player may read and update only their own profile.
       allow read: if signedIn() && request.auth.uid == userId;

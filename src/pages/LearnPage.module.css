@@ -1,0 +1,43 @@
+.lessons {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.lesson { flex-direction: row; align-items: center; gap: 14px; }
+.lessonText { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+
+.badge {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(87, 194, 184, 0.5);
+  color: var(--teal-light);
+  font-weight: 800;
+}
+
+.badgeDone { border-color: var(--gold); background: rgba(212, 175, 55, 0.15); color: var(--gold); }
+
+.puzzles { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.puzzle {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(242, 230, 204, 0.15);
+  background: rgba(20, 15, 16, 0.6);
+  color: var(--cream);
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 0.2s, transform 0.12s;
+}
+
+.puzzle:hover { border-color: var(--teal-light); transform: translateY(-1px); }
+.puzzle:focus-visible { outline: 2px solid var(--teal-light); }
+.solved { border-color: rgba(212, 175, 55, 0.6); color: var(--gold); background: rgba(212, 175, 55, 0.1); }

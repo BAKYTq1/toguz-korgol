@@ -1,0 +1,95 @@
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 40px;
+  padding-top: 8px;
+}
+
+.heroText { display: flex; flex-direction: column; gap: 18px; }
+
+.heroArt {
+  display: block;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.55));
+  transition: transform 0.2s;
+}
+
+.heroArt:hover { transform: translateY(-2px); }
+.heroArt:focus-visible { outline: 2px solid var(--teal-light); outline-offset: 6px; border-radius: 12px; }
+
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.game { gap: 8px; padding: 14px 14px 16px; }
+.art { margin-bottom: 4px; }
+
+.gameHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.origin { font-size: 12px; color: rgba(242, 230, 204, 0.5); white-space: nowrap; }
+
+.play { margin-top: auto; font-weight: 700; font-size: 14px; color: var(--gold); }
+.soonLabel { margin-top: auto; font-size: 13px; color: rgba(242, 230, 204, 0.45); }
+.soon { opacity: 0.7; }
+.soon .art { filter: saturate(0.4); }
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+}
+
+.feature { display: flex; flex-direction: column; gap: 12px; }
+
+.more {
+  margin-top: auto;
+  width: fit-content;
+  color: var(--teal-light);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(87, 194, 184, 0.4);
+  padding-bottom: 1px;
+}
+
+.more:hover { border-bottom-color: var(--teal-light); }
+
+.lessonList { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: rgba(242, 230, 204, 0.85); }
+.lessonList li { display: flex; align-items: center; gap: 10px; }
+
+.todo,
+.done {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.todo { border: 1.5px solid rgba(87, 194, 184, 0.45); color: var(--teal-light); }
+.done { background: var(--gold); color: #1b130b; }
+
+.sample { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.sample td { padding: 6px 8px 6px 0; border-bottom: 1px solid rgba(242, 230, 204, 0.08); color: rgba(242, 230, 204, 0.85); }
+.sample td:first-child { color: rgba(242, 230, 204, 0.45); width: 22px; }
+.pts { color: var(--gold) !important; font-weight: 700; text-align: right; }
+.buch { color: rgba(242, 230, 204, 0.45) !important; text-align: right; }
+
+.code { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
+.code span { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 30px; font-weight: 700; letter-spacing: 6px; color: var(--gold); }
+.code small { font-size: 12px; color: rgba(242, 230, 204, 0.5); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; gap: 22px; }
+  .heroArt { order: -1; max-width: 460px; }
+  .features { grid-template-columns: 1fr; gap: 32px; }
+}
+
+/* On phones the first catalogue card shows the same board right below. */
+@media (max-width: 600px) {
+  .heroArt { display: none; }
+}

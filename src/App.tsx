@@ -14,6 +14,7 @@ import { normalizeRoomCode, useMultiplayer } from './hooks/useMultiplayer';
 import { t, TranslationKey } from './i18n/translations';
 import { firebaseConfigured, loadFirebase, preloadFirebase } from './lib/firebase';
 import { recordProfileGame } from './lib/profile';
+import { navigate } from './platform/router';
 import type { Player } from './game/engine';
 import styles from './App.module.css';
 
@@ -99,6 +100,11 @@ export default function App() {
     handleJoinRoom(inviteCode);
   }, [inviteCode, handleJoinRoom]);
 
+  // Leaving the game page (back to the platform) gives up the seat in an online room.
+  const disconnectRef = useRef(mp.disconnect);
+  disconnectRef.current = mp.disconnect;
+  useEffect(() => () => void disconnectRef.current(), []);
+
   // Close the online window once the opponent is there.
   const onlineStatus = mp.mp.status;
   useEffect(() => {
@@ -181,6 +187,7 @@ export default function App() {
   }, [setAnimating]);
 
   const navItems: { key: string; icon: IconName; label: TranslationKey; title: TranslationKey; onClick: () => void; accent?: string; wide?: boolean }[] = [
+    { key: 'home', icon: 'home', label: 'navHome', title: 'navHome', onClick: () => navigate('/') },
     { key: 'online', icon: 'online', label: 'navOnline', title: 'playOnline', onClick: handlePlayOnline, accent: onlinePlaying ? styles.linked : undefined, wide: true },
     { key: 'account', icon: 'user', label: 'navProfile', title: 'accountTitle', onClick: () => { preloadFirebase(); setShowAccount(true); } },
     { key: 'settings', icon: 'settings', label: 'navSettings', title: 'settingsTitle', onClick: () => setShowSettings(true) },

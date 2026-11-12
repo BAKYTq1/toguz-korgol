@@ -86,6 +86,7 @@ export type TranslationKey =
   | 'opponentLeft'
   | 'connectionLost'
   | 'connectError'
+  | 'navHome'
   | 'navOnline'
   | 'navProfile'
   | 'navSettings'
@@ -143,6 +144,8 @@ export type TranslationKey =
   | 'previewTapAgain'
   | 'settingOn'
   | 'settingOff'
+  | 'modeLabel'
+  | 'hapticsLabel'
   | 'rulesText';
 
 type Translations = Record<TranslationKey, string>;
@@ -234,6 +237,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Каршылаш чыгып кетти.',
     connectionLost: 'Байланыш үзүлдү.',
     connectError: 'Туташуу мүмкүн эмес. Серверди текшериңиз.',
+    navHome: 'Оюндар',
     navOnline: 'Онлайн',
     navProfile: 'Профиль',
     navSettings: 'Жөндөө',
@@ -291,6 +295,8 @@ export const translations: Record<Lang, Translations> = {
     previewTapAgain: 'Жүрүү үчүн дагы бир басыңыз',
     settingOn: 'Күйүк',
     settingOff: 'Өчүк',
+    modeLabel: 'Оюн режими',
+    hapticsLabel: 'Дирилдөө',
     rulesText: `**Максат:** 162 коргоолдун 82 же андан ашыгын чогулт.
 
 **Жүрүш:** Өз катарыңдан бош эмес чуңкурду тандап, анын бардык коргоолдорун саат жебесине каршы бирден жайгаш. Биринчи коргоол ошол эле чуңкурга калат. Чуңкурда бир гана коргоол болсо — ал кийинки чуңкурга өтөт.
@@ -390,6 +396,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Соперник отключился.',
     connectionLost: 'Соединение потеряно.',
     connectError: 'Не удалось подключиться. Проверьте адрес сервера.',
+    navHome: 'Игры',
     navOnline: 'Онлайн',
     navProfile: 'Профиль',
     navSettings: 'Настройки',
@@ -447,6 +454,8 @@ export const translations: Record<Lang, Translations> = {
     previewTapAgain: 'Нажмите ещё раз, чтобы сходить',
     settingOn: 'Вкл',
     settingOff: 'Выкл',
+    modeLabel: 'Режим игры',
+    hapticsLabel: 'Вибрация',
     rulesText: `**Цель:** Собрать 82 или более из 162 камешков в свой казан.
 
 **Ход:** Выберите любую непустую лунку в своём ряду и рассейте все камешки по одному против часовой стрелки. Первый камешек остаётся в той же лунке. Если в лунке один камешек — он переходит в следующую.
@@ -546,6 +555,7 @@ export const translations: Record<Lang, Translations> = {
     opponentLeft: 'Opponent disconnected.',
     connectionLost: 'Connection lost.',
     connectError: 'Could not connect. Check the server address.',
+    navHome: 'Games',
     navOnline: 'Online',
     navProfile: 'Profile',
     navSettings: 'Settings',
@@ -603,6 +613,8 @@ export const translations: Record<Lang, Translations> = {
     previewTapAgain: 'Tap again to move',
     settingOn: 'On',
     settingOff: 'Off',
+    modeLabel: 'Game mode',
+    hapticsLabel: 'Vibration',
     rulesText: `**Goal:** Collect 82 or more of the 162 stones in your kazan (treasury).
 
 **Turn:** Choose any non-empty pit in your row and sow its stones one by one counter-clockwise. The first stone goes back into the same pit; a single stone moves to the next pit.
